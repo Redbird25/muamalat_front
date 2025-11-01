@@ -30,8 +30,6 @@ const ModalLoginRegister = ({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [count, setCount] = useState(60);
   const [register, setRegister] = useState(false);
-  const [liked_arr, setLiked] = useState([]);
-  const [cart_arr, setCart] = useState([]);
   const [{user_name, user_surname, user_phone}, setFormUser] = useState({
     user_name: "",
     user_surname: "",
@@ -49,25 +47,6 @@ const ModalLoginRegister = ({
 
     return () => clearInterval(interval); // Cleanup function
   }, [count, sendCode]); // Empty dependency array ensures it runs only once
-
-  useEffect(() => {
-    if (isModal) {
-      Object.entries(products).forEach(([k, v]) => {
-        if (get(v, "cart")) {
-          setCart(prevState => [...prevState, {
-            product_id: k,
-            count: get(products, `[${k}].quantity`, 1)
-          }])
-        }
-        if (get(v, "like")) {
-          setLiked(prevState => [...prevState, {
-            product_id: k,
-          }])
-        }
-      });
-    }
-  }, [isModal, products])
-
 
   const clearState = () => {
     setCode("");

@@ -30,13 +30,6 @@ const CatalogPage = () => {
   const flat = useMemo(() => flattenTree(tree), [tree]);
   const selected = flat.find(item => item.id === selectedId) || tree[0];
 
-  const childNodes = useMemo(() => {
-    if (!selected) return [];
-    return tree.find(item => item.id === selected.id)?.children
-      || tree.flatMap(parent => parent.children || []).filter(item => item.parentId === selected.id)
-      || selected.children || [];
-  }, [selected, tree]);
-
   const handleSelect = (id) => {
     setSelectedId(id);
   };

@@ -82,7 +82,9 @@ function* CustomerAuthStart(action) {
   try {
     const normalizedPhone = normalizePhoneNumber(phoneNumber);
     if (!normalizedPhone) {
-      throw {response: {data: {message: 'Invalid phone number'}}};
+      const error = new Error('Invalid phone number');
+      error.response = {data: {message: 'Invalid phone number'}};
+      throw error;
     }
     const response = yield call(api.customerAuth.startBuyer, {phoneNumber: normalizedPhone});
     const txId = get(response, 'data.txId');
@@ -152,7 +154,9 @@ function* CustomerAuthVerify(action) {
       yield call(cb.success, authData);
       return;
     }
-    throw response;
+    const error = new Error('Customer auth verification failed');
+    error.response = response;
+    throw error;
   } catch (err) {
     yield put(Actions.CUSTOMER_AUTH_VERIFY.failure(get(err, 'response.data', '')));
     yield call(cb.error, get(err, 'response.data'));
