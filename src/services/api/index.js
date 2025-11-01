@@ -20,6 +20,17 @@ const request = axios.create({
 });
 request.defaults.headers.common["Cache-Control"] = "no-cache";
 
+const PRODUCT_ENDPOINT_PREFIXES = [
+  '/products',
+  '/product/',
+  '/products-types',
+  '/seller/products',
+  '/seller/product-delete'
+];
+
+const isProductsEndpoint = (path = '') =>
+  typeof path === 'string' && PRODUCT_ENDPOINT_PREFIXES.some(prefix => path.startsWith(prefix));
+
 const queryBuilder = (
   url = '',
   {
@@ -90,11 +101,23 @@ const queryBuilder = (
       }
     })
   }
-  
-  return buildUrl({
+
+  const builtPath = buildUrl({
     path: url,
     queryParams: query
-  })
+  });
+
+  if (isProductsEndpoint(url) && config.PRODUCTS_API_ROOT) {
+    const base = config.PRODUCTS_API_ROOT.endsWith("/")
+      ? config.PRODUCTS_API_ROOT.slice(0, -1)
+      : config.PRODUCTS_API_ROOT;
+    const normalizedPath = builtPath.startsWith("/")
+      ? builtPath
+      : `/${builtPath}`;
+    return `${base}${normalizedPath}`;
+  }
+
+  return builtPath;
 };
 
 
