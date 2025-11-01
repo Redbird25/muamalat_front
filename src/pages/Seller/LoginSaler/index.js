@@ -1,0 +1,259 @@
+import React, {useEffect, useState} from 'react';
+import icon_1 from "assets/images/icon/shipment.svg"
+import icon_2 from "assets/images/icon/fast-delivery.svg"
+import icon_3 from "assets/images/icon/delivery.svg"
+import icon_4 from "assets/images/icon/credit-card.svg"
+import {Link, useNavigate} from "react-router-dom";
+import InputPhone from "../../../components/Fields/InputPhone";
+import {METHOD} from "../../../schema/actions";
+import {useDispatch} from "react-redux";
+import ReactCodeInput from "react-code-input";
+import {LOGIN} from "../../../redux/actions";
+import {toast} from "react-toastify";
+import {get} from "lodash";
+
+const LoginSaler = () => {
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const [phone, setPhone] = useState("");
+  const [code, setCode] = useState("");
+  const [phoneCheck, setPhoneCheck] = useState(false);
+  const [count, setCount] = useState(60);
+  
+  useEffect(() => {
+    const interval = count !== 0 && phoneCheck && setInterval(() => {
+      setCount((prevCount) => prevCount - 1);
+    }, 1000);
+    
+    if (!phoneCheck) {
+      setCount(60);
+    }
+    
+    return () => clearInterval(interval); // Cleanup function
+  }, [count, phoneCheck]); // Empty dependency array ensures it runs only once
+  
+  return (
+    <div className="container sales-login my-4 min-vh-50">
+      <div className="row h-100">
+        <div className="col-lg-7 mb-lg-0 mb-3">
+          <div className="sales-login_left">
+            <p className="fs-md-48 fs-30 fw-700 lh-lg-48 lh-30 text-212640 mb-2">
+              Продавайте свои товары
+              <br/>в Trast Muamalat!
+            </p>
+            
+            <p className="fs-lg-24 fs-18 text-141316 lh-lg-31 lh-19">
+              Разместите свои товары в магазине Trast Muamalat и увеличте свои продажи!
+            </p>
+            
+            <button type="button" className="btn btn-menu w-lg-50 w-100 custom-rounded-8">
+              <span className="bg-gradient-custom reverse custom-rounded-8"></span>
+              <span className="position-relative custom-zindex-2 fw-700 fs-17">
+                            Стать партнёром
+                        </span>
+            </button>
+            
+            
+            <div className="row mt-4">
+              <div className="col-lg-6 mb-lg-0 mb-3">
+                <div className="h-100 p-md-4 p-0 custom-rounded-12">
+                  <div className="row align-items-center">
+                    <div className="col-auto">
+                      <div className="bg-fcfcfc custom-rounded-15 position-relative"
+                           style={{width: 64, height: 64}}
+                      >
+                        <img src={icon_1}
+                             className="position-absolute top-50 start-50 translate-middle" alt="icon"/>
+                      </div>
+                    </div>
+                    
+                    <div className="col-8">
+                      <p className="mb-0 text-141316 fw-600 lh-19">Больше не нужно ходить на базар</p>
+                      <p className="mb-0 fs-14 text-a7a7a7 lh-17">У нас выгодные цены и доставка </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-lg-6 mb-lg-0 mb-3">
+                <div className="h-100 p-md-4 p-0 custom-rounded-12">
+                  <div className="row align-items-center">
+                    <div className="col-auto">
+                      <div className="bg-fcfcfc custom-rounded-15 position-relative"
+                           style={{width: 64, height: 64}}
+                      >
+                        <img src={icon_2}
+                             className="position-absolute top-50 start-50 translate-middle" alt="icon"/>
+                      </div>
+                    </div>
+                    
+                    <div className="col-8">
+                      <p className="mb-0 text-141316 fw-600 lh-19">Быстрая доставка</p>
+                      <p className="mb-0 fs-14 text-a7a7a7 lh-17">Наш сервис удивит вас</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-lg-6 mb-lg-0 mb-3">
+                <div className="h-100 p-md-4 p-0 custom-rounded-12">
+                  <div className="row align-items-center">
+                    <div className="col-auto">
+                      <div className="bg-fcfcfc custom-rounded-15 position-relative"
+                           style={{width: 64, height: 64}}
+                      >
+                        <img src={icon_3}
+                             className="position-absolute top-50 start-50 translate-middle" alt="icon"/>
+                      </div>
+                    </div>
+                    
+                    <div className="col-8">
+                      <p className="mb-0 text-141316 fw-600 lh-19">Удобства для вас</p>
+                      <p className="mb-0 fs-14 text-a7a7a7 lh-17">Быстро оформление и гарантия на возврать
+                        в случае неисправности</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="col-lg-6 mb-lg-0 mb-3">
+                <div className="h-100 p-md-4 p-0 custom-rounded-12">
+                  <div className="row align-items-center">
+                    <div className="col-auto">
+                      <div className="bg-fcfcfc custom-rounded-15 position-relative"
+                           style={{width: 64, height: 64}}
+                      >
+                        <img src={icon_4}
+                             className="position-absolute top-50 start-50 translate-middle" alt="icon"/>
+                      </div>
+                    </div>
+                    
+                    <div className="col-8">
+                      <p className="mb-0 text-141316 fw-600 lh-19">Рассрочка</p>
+                      <p className="mb-0 fs-14 text-a7a7a7 lh-17">Без предоплат</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-5 mb-lg-0 mb-3">
+          <div className="sales-login_right">
+            <p className="fs-32 fw-700">Вход</p>
+            
+            {
+              phoneCheck
+                ? <div className="mb-4">
+                  <label htmlFor="password_salesman" className="form-label mb-1 text-141316 fs-14 fw-600">Пароль</label>
+                  
+                  <ReactCodeInput
+                    className={"d-flex align-items-center justify-content-evenly mt-5 mb-4 code-input-group"}
+                    type='number'
+                    name={"otp"}
+                    fields={5}
+                    inputMode={"numeric"}
+                    onChange={(value) => setCode(value)}
+                  />
+                  
+                  <p className="text-center text-334150">
+                    Если код не придёт, можно получить новый <br/>через <span id="phone-timer">{count}</span> сек
+                  </p>
+                </div>
+                : <div className="mb-4">
+                  <label htmlFor="phone_salesman" className="form-label mb-1 text-141316 fs-14 fw-600">Телефон</label>
+                  <InputPhone
+                    id={"phone_salesman"}
+                    name="phone_salesman"
+                    format="+998 ## ### ## ##"
+                    className={`form-control custom-rounded-12 fs-14 text-334150 focus-none`}
+                    type="tel"
+                    style={{minHeight: 50}}
+                    value={phone}
+                    isNumericString
+                    onValueChange={e => {
+                      setPhone(e.value)
+                    }}
+                    allowEmptyFormatting
+                  />
+                </div>
+            }
+            
+            
+            <button
+              type="button"
+              className="btn btn-menu focus-none w-100 custom-rounded-8"
+              onClick={() => {
+                if (phoneCheck) {
+                  dispatch(METHOD.request({
+                    url: "check-code",
+                    name: "verificationCode",
+                    values: {
+                      phone_number: `998${phone}`,
+                      number: code
+                    },
+                    cb: {
+                      success: (data) => {
+                        dispatch(LOGIN.success({
+                          ...data
+                        }));
+                        setCode("");
+                        setPhoneCheck(false);
+                        navigate("/dashboard", {replace: true})
+                      },
+                      error: (error) => {
+                        toast.error(get(error, "message"))
+                      },
+                      finally: () => {
+                      
+                      }
+                    }
+                  }))
+                } else {
+                  dispatch(METHOD.request({
+                    url: "/send-sms",
+                    name: "phoneSmsSendSeller",
+                    values: {
+                      phone_number: `998${phone}`
+                    },
+                    cb: {
+                      success: () => {
+                        setPhoneCheck(true);
+                      },
+                      error: (error) => {
+                        toast.error(get(error, "message"))
+                      },
+                      finally: () => {
+                      
+                      }
+                    }
+                  }))
+                }
+              }}
+            >
+              <span className="bg-gradient-custom reverse custom-rounded-8"></span>
+              <span className="position-relative custom-zindex-2 fw-700 fs-17">
+                {
+                  phoneCheck
+                    ? "Войти"
+                    : "Получить код"
+                }
+              </span>
+            </button>
+            {/*<Link to={"#"} className="my-4 d-block text-center text-334150">
+              Восстановить пароль
+            </Link>*/}
+            
+            <hr/>
+            
+            <p className="fs-32 fw-700">У Вас нет учётной записи?</p>
+            
+            <Link to={"/seller-registration"}
+                  className="btn focus-none border-212640 w-100 custom-rounded-8 fs-17 fw-700">
+              Регистрация
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default LoginSaler;

@@ -1,0 +1,14 @@
+const {
+  REACT_APP_API_ROOT,
+  REACT_APP_FILE_ROOT,
+  REACT_APP_YANDEX_MAP_KEY
+} = process.env;
+
+const config = {
+  API_ROOT: REACT_APP_API_ROOT || '',
+  FILE_ROOT: REACT_APP_FILE_ROOT || '',
+  YANDEX_KEY: REACT_APP_YANDEX_MAP_KEY || ''
+};
+
+
+export default config;

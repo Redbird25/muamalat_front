@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm start)",
+      "Bash(lsof:*)",
+      "Bash(xargs kill:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run build:*)",
+      "Bash(PORT=3031 npm start)",
+      "Bash(npx serve:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

@@ -1,0 +1,104 @@
+$sidebar-bg-color: #fff;
+$sidebar-color: #092A5B;
+$highlight-color: #092A5B;
+$submenu-bg-color: #092A5B;
+$submenu-bg-color-collapsed: #092A5B;
+$icon-bg-color: transparent;
+$submenu-indent: 0;
+
+@import '~react-pro-sidebar/dist/scss/styles.scss';
+
+@keyframes swing {
+}
+
+.sidebar_holder {
+  min-width: 300px;
+  width: 300px;
+  transition: all 0.2s linear;
+}
+
+.admin-panel.active-nav .sidebar_holder {
+  min-width: 100px;
+  width: 100px;
+}
+
+.pro-sidebar .pro-menu .pro-menu-item > .pro-inner-item {
+  padding: 6px 12px!important;
+  transition: all 0.1s ease-in-out;
+}
+
+.pro-sidebar .pro-menu .pro-menu-item {
+  font-size: 15px;
+  font-weight: 500;
+  padding: 0 10px!important;
+  color: #181D25;
+
+  &.active .pro-inner-item {
+    border-radius: var(--numbers-radius-base, 8px);
+    background: var(--main-colors-primary-soft, #EBF1FF);
+    color: var(--Text-colors-text-highlight, #3348FF);
+  }
+}
+
+
+.active-menu {
+  background-color: rgba(70, 128, 255, 0.65);
+}
+
+.pro-sidebar-layout::-webkit-scrollbar {
+  width: 0;
+}
+
+.pro-sidebar-layout::-webkit-scrollbar-track {
+  width: 0;
+}
+
+.pro-sidebar-layout::-webkit-scrollbar-thumb {
+  width: 0;
+}
+
+.pro-sidebar .pro-menu .pro-menu-item.pro-sub-menu .pro-inner-list-item .pro-inner-item {
+  padding: 8px 15px;
+}
+
+.pro-sidebar .pro-menu .pro-menu-item.pro-sub-menu .pro-inner-list-item .pro-inner-item > .pro-icon-wrapper {
+  min-width: 20px;
+}
+
+.pro-sidebar > .pro-sidebar-inner > .pro-sidebar-layout {
+  border-right: 1px solid #E1E5EA;
+}
+
+.pro-sidebar .pro-menu .pro-menu-item > .pro-inner-item > .pro-icon-wrapper {
+  width: 30px;
+  min-width: 30px;
+}
+
+.cursor-default {
+  cursor: default !important;
+}
+
+.hover-unset:hover {
+  position: unset !important;
+}
+
+.pro-sidebar.collapsed .pro-menu > ul > .pro-menu-item.hover-unset:hover > .pro-inner-list-item {
+  display: none;
+}
+
+.pro-sidebar .pro-menu > ul > .pro-sub-menu > .pro-inner-list-item > div > ul {
+  padding: 0 0 0 10px;
+}
+
+.menu-btn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+
+  &.active {
+    color: var(--Text-colors-text-highlight, #3348FF);
+  }
+}
+

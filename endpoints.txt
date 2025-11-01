@@ -1,0 +1,109 @@
+Endpoint:
+Request Body:
+Response Body:
+
+Endpoint: /auth/verify-seller
+Request Body:{
+  "txId": "string",
+  "code": "string"
+}
+Response Body: {
+  "accessToken": "string",
+  "refreshToken": "string",
+  "userId": "string",
+  "identifier": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string"
+}
+
+Endpoint: /auth/verify-buyer
+Request Body: {
+  "txId": "string",
+  "code": "string"
+}
+Response Body: {
+  "accessToken": "string",
+  "refreshToken": "string",
+  "userId": "string",
+  "identifier": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string"
+}
+
+Endpoint: /auth/start/seller
+Request Body: {
+  "phoneNumber": "string",
+  "intent": "LOGIN", (can be login or register depends on form)
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string"
+}
+Response Body: {
+  "txId": "string"
+}
+
+Endpoint: /auth/start/buyer
+Request Body: {
+  "phoneNumber": "string",
+  "intent": "LOGIN", (can be login or register depends on form)
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string"
+}
+Response Body: {
+  "txId": "string"
+}
+
+Endpoint: /auth/resend?txId=
+Response Body: 200 OK
+
+Endpoint: /auth/refresh
+Request Body: {
+  "refreshToken": "string"
+}
+Response Body: {
+  "accessToken": "string",
+  "refreshToken": "string",
+  "userId": "string",
+  "identifier": "string",
+  "firstName": "string",
+  "lastName": "string",
+  "middleName": "string"
+}
+
+Endpoint: /auth/logout
+Request Body: {
+  "refreshToken": "string"
+}
+Response Body: 204 No Content
+
+Endpoint: /api/v1/business/submit-for-review
+Request body (multipart/form-data): 
+passportOfDirector* string($binary),
+businessLicense* string($binary),
+appointmentOrderOfDirector* string($binary),
+requestBody* object: {
+  "businessInfo": {
+    "legalBusinessName": "string",
+    "type": "LIMITED_LIABILITY_COMPANY",
+    "taxpayerIdentificationNumber": "string",
+    "ifut": "string",
+    "additionalPhoneNumber": "string"
+  },
+  "businessAccount": {
+    "name": "string",
+    "mfoBankCode": "string",
+    "ifutBankCode": "string"
+  },
+  "businessLocation": {
+    "region": "string",
+    "district": "string",
+    "street": "string",
+    "building": "string"
+  }
+}
+
+
+
