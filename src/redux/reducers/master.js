@@ -13,9 +13,35 @@ const initialState = {
     alerts: []
   },
   catalog: {
-    tree: [],
-    attributes: [],
+    items: [],
     lastUpdated: null
+  },
+  categories: {
+    items: [],
+    page: 0,
+    size: 50,
+    total: 0
+  },
+  subCategories: {
+    items: [],
+    page: 0,
+    size: 50,
+    total: 0
+  },
+  characteristics: {
+    items: [],
+    page: 0,
+    size: 20,
+    total: 0
+  },
+  permissions: {
+    items: []
+  },
+  adminUsers: {
+    items: [],
+    page: 0,
+    size: 20,
+    total: 0
   },
   pendingProducts: [],
   featuredProducts: [],
@@ -25,14 +51,27 @@ const initialState = {
       total: 0,
       pending: 0,
       approved: 0,
-      rejected: 0
+      rejected: 0,
+      drafts: 0
     }
   },
   loading: {
     overview: false,
     catalog: false,
+    catalogMutation: false,
+    categories: false,
+    categoryMutation: false,
+    subCategories: false,
+    subCategoryMutation: false,
     pending: false,
-    merchants: false
+    merchants: false,
+    characteristics: false,
+    characteristicMutation: false,
+    permissions: false,
+    permissionMutation: false,
+    grantPermission: false,
+    adminUsers: false,
+    adminUserMutation: false
   },
   errors: {}
 };
@@ -82,8 +121,7 @@ const MasterReducer = (state = initialState, action) => {
       return {
         ...state,
         catalog: {
-          tree: get(action.payload, 'tree', []),
-          attributes: get(action.payload, 'attributes', []),
+          items: get(action.payload, 'items', []),
           lastUpdated: get(action.payload, 'lastUpdated', new Date().toISOString())
         },
         loading: {...state.loading, catalog: false},
@@ -94,6 +132,111 @@ const MasterReducer = (state = initialState, action) => {
         ...state,
         loading: {...state.loading, catalog: false},
         errors: {...state.errors, catalog: action.payload}
+      };
+
+    case Actions.MASTER_FETCH_CATEGORIES.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, categories: true}
+      };
+    case Actions.MASTER_FETCH_CATEGORIES.SUCCESS:
+      return {
+        ...state,
+        categories: {
+          items: get(action.payload, 'items', []),
+          page: get(action.payload, 'page', 0),
+          size: get(action.payload, 'size', 50),
+          total: get(action.payload, 'total', 0)
+        },
+        loading: {...state.loading, categories: false},
+        errors: {...state.errors, categories: null}
+      };
+    case Actions.MASTER_FETCH_CATEGORIES.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, categories: false},
+        errors: {...state.errors, categories: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_CATEGORY.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, categoryMutation: true}
+      };
+    case Actions.MASTER_CREATE_CATEGORY.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, categoryMutation: false},
+        errors: {...state.errors, categoryMutation: null}
+      };
+    case Actions.MASTER_CREATE_CATEGORY.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, categoryMutation: false},
+        errors: {...state.errors, categoryMutation: action.payload}
+      };
+
+    case Actions.MASTER_FETCH_SUBCATEGORIES.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, subCategories: true}
+      };
+    case Actions.MASTER_FETCH_SUBCATEGORIES.SUCCESS:
+      return {
+        ...state,
+        subCategories: {
+          items: get(action.payload, 'items', []),
+          page: get(action.payload, 'page', 0),
+          size: get(action.payload, 'size', 50),
+          total: get(action.payload, 'total', 0)
+        },
+        loading: {...state.loading, subCategories: false},
+        errors: {...state.errors, subCategories: null}
+      };
+    case Actions.MASTER_FETCH_SUBCATEGORIES.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, subCategories: false},
+        errors: {...state.errors, subCategories: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_SUBCATEGORY.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, subCategoryMutation: true}
+      };
+    case Actions.MASTER_CREATE_SUBCATEGORY.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, subCategoryMutation: false},
+        errors: {...state.errors, subCategoryMutation: null}
+      };
+    case Actions.MASTER_CREATE_SUBCATEGORY.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, subCategoryMutation: false},
+        errors: {...state.errors, subCategoryMutation: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_CATALOG.REQUEST:
+    case Actions.MASTER_UPDATE_CATALOG.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, catalogMutation: true}
+      };
+    case Actions.MASTER_CREATE_CATALOG.SUCCESS:
+    case Actions.MASTER_UPDATE_CATALOG.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, catalogMutation: false},
+        errors: {...state.errors, catalogMutation: null}
+      };
+    case Actions.MASTER_CREATE_CATALOG.FAILURE:
+    case Actions.MASTER_UPDATE_CATALOG.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, catalogMutation: false},
+        errors: {...state.errors, catalogMutation: action.payload}
       };
 
     case Actions.MASTER_FETCH_PENDING_PRODUCTS.REQUEST:
@@ -141,34 +284,165 @@ const MasterReducer = (state = initialState, action) => {
       };
 
     case Actions.MASTER_UPDATE_MERCHANT_STATUS.SUCCESS: {
-      const merchantId = get(action.payload, 'merchantId');
-      if (!merchantId) {
+      const sellerProfileId = get(action.payload, 'sellerProfileId');
+      if (!sellerProfileId) {
         return state;
       }
-      const updatedQueue = state.merchants.queue.map(item => {
-        if (get(item, 'id') !== merchantId) return item;
-        return {...item, ...action.payload.merchant};
-      });
-      const nextSummary = {...state.merchants.summary};
-      const newStatus = get(action.payload, 'status', get(action.payload, 'merchant.status'));
-      if (newStatus && nextSummary) {
-        if (nextSummary.pending > 0) nextSummary.pending -= 1;
-        if (newStatus === 'approved') {
-          nextSummary.approved = (nextSummary.approved || 0) + 1;
-        }
-        if (newStatus === 'rejected') {
-          nextSummary.rejected = (nextSummary.rejected || 0) + 1;
-        }
-      }
+      const updatedQueue = state.merchants.queue.filter(item => get(item, 'id') !== sellerProfileId);
       return {
         ...state,
         merchants: {
           ...state.merchants,
-          summary: nextSummary,
-          queue: updatedQueue.filter(item => (item.status || '').toUpperCase() === 'PENDING_REVIEW')
+          queue: updatedQueue
         }
       };
     }
+    case Actions.MASTER_UPDATE_MERCHANT_STATUS.FAILURE:
+      return {
+        ...state,
+        errors: {...state.errors, merchants: action.payload}
+      };
+
+    case Actions.MASTER_FETCH_CHARACTERISTICS.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, characteristics: true}
+      };
+    case Actions.MASTER_FETCH_CHARACTERISTICS.SUCCESS:
+      return {
+        ...state,
+        characteristics: {
+          items: get(action.payload, 'items', []),
+          page: get(action.payload, 'page', 0),
+          size: get(action.payload, 'size', 20),
+          total: get(action.payload, 'total', 0)
+        },
+        loading: {...state.loading, characteristics: false},
+        errors: {...state.errors, characteristics: null}
+      };
+    case Actions.MASTER_FETCH_CHARACTERISTICS.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, characteristics: false},
+        errors: {...state.errors, characteristics: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_CHARACTERISTIC.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, characteristicMutation: true}
+      };
+    case Actions.MASTER_CREATE_CHARACTERISTIC.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, characteristicMutation: false},
+        errors: {...state.errors, characteristicMutation: null}
+      };
+    case Actions.MASTER_CREATE_CHARACTERISTIC.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, characteristicMutation: false},
+        errors: {...state.errors, characteristicMutation: action.payload}
+      };
+
+    case Actions.MASTER_FETCH_PERMISSIONS.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, permissions: true}
+      };
+    case Actions.MASTER_FETCH_PERMISSIONS.SUCCESS:
+      return {
+        ...state,
+        permissions: {
+          items: get(action.payload, 'items', [])
+        },
+        loading: {...state.loading, permissions: false},
+        errors: {...state.errors, permissions: null}
+      };
+    case Actions.MASTER_FETCH_PERMISSIONS.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, permissions: false},
+        errors: {...state.errors, permissions: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_PERMISSION.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, permissionMutation: true}
+      };
+    case Actions.MASTER_CREATE_PERMISSION.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, permissionMutation: false},
+        errors: {...state.errors, permissionMutation: null}
+      };
+    case Actions.MASTER_CREATE_PERMISSION.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, permissionMutation: false},
+        errors: {...state.errors, permissionMutation: action.payload}
+      };
+
+    case Actions.MASTER_GIVE_PERMISSION.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, grantPermission: true}
+      };
+    case Actions.MASTER_GIVE_PERMISSION.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, grantPermission: false},
+        errors: {...state.errors, grantPermission: null}
+      };
+    case Actions.MASTER_GIVE_PERMISSION.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, grantPermission: false},
+        errors: {...state.errors, grantPermission: action.payload}
+      };
+
+    case Actions.MASTER_FETCH_ADMIN_USERS.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, adminUsers: true}
+      };
+    case Actions.MASTER_FETCH_ADMIN_USERS.SUCCESS:
+      return {
+        ...state,
+        adminUsers: {
+          items: get(action.payload, 'items', []),
+          page: get(action.payload, 'page', 0),
+          size: get(action.payload, 'size', 20),
+          total: get(action.payload, 'total', 0)
+        },
+        loading: {...state.loading, adminUsers: false},
+        errors: {...state.errors, adminUsers: null}
+      };
+    case Actions.MASTER_FETCH_ADMIN_USERS.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, adminUsers: false},
+        errors: {...state.errors, adminUsers: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_ADMIN_USER.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, adminUserMutation: true}
+      };
+    case Actions.MASTER_CREATE_ADMIN_USER.SUCCESS:
+      return {
+        ...state,
+        loading: {...state.loading, adminUserMutation: false},
+        errors: {...state.errors, adminUserMutation: null}
+      };
+    case Actions.MASTER_CREATE_ADMIN_USER.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, adminUserMutation: false},
+        errors: {...state.errors, adminUserMutation: action.payload}
+      };
 
     case Actions.MASTER_APPROVE_PRODUCT.SUCCESS: {
       const approvedProduct = get(action.payload, 'product');

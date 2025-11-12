@@ -175,9 +175,13 @@ const customerAuth = {
   startSeller: ({phoneNumber} = {}) => customerAuthRequest.post(customerAuthUrl.startSeller, null, {
     params: {phoneNumber}
   }),
+  startAdmin: ({phoneNumber} = {}) => customerAuthRequest.post('/api/v1/auth/otp/start-admin', null, {
+    params: {phoneNumber}
+  }),
   verify: (data) => customerAuthRequest.post(customerAuthUrl.verifyBuyer, data),
   verifyBuyer: (data) => customerAuthRequest.post(customerAuthUrl.verifyBuyer, data),
   verifySeller: (data) => customerAuthRequest.post(customerAuthUrl.verifySeller, data),
+  verifyAdmin: (data) => customerAuthRequest.post('/api/v1/auth/otp/verify-admin', data),
   resend: ({txId} = {}) => customerAuthRequest.post(customerAuthUrl.resend, null, {
     params: {txId}
   }),
@@ -189,7 +193,11 @@ const customerAuth = {
       headers.Authorization = `Bearer ${accessToken}`;
     }
     return request.put(customerAuthUrl.fillProfile, profile || {}, {headers});
-  }
+  },
+  userInfo: ({accessToken} = {}) =>
+    request.get('/api/v1/auth/userinfo', {
+      headers: authHeader(accessToken)
+    })
 };
 
 const authHeader = (accessToken) => {
@@ -197,6 +205,20 @@ const authHeader = (accessToken) => {
     return {};
   }
   return {Authorization: `Bearer ${accessToken}`};
+};
+
+const buildApiUrl = (path = '') => {
+  const base = config.API_ROOT || '';
+  if (!base) {
+    return path;
+  }
+  const normalizedBase = base.endsWith('/')
+    ? base.slice(0, -1)
+    : base;
+  const normalizedPath = path.startsWith('/')
+    ? path
+    : `/${path}`;
+  return `${normalizedBase}${normalizedPath}`;
 };
 
 const merchant = {
@@ -234,16 +256,112 @@ const sellerProfile = {
 };
 
 const master = {
-  getOverview: (params = {}) => request.get('/api/v1/admin/overview', {params}),
-  getCatalogTree: () => request.get('/api/v1/admin/catalog/tree'),
-  getCatalogAttributes: () => request.get('/api/v1/admin/catalog/attributes'),
-  getPendingProducts: () => request.get('/api/v1/admin/products/pending'),
-  approveProduct: (productId, payload = {}) =>
-    request.post(`/api/v1/admin/products/${productId}/approve`, payload),
-  updateProductFlags: (productId, flags = {}) =>
-    request.patch(`/api/v1/admin/products/${productId}/flags`, flags),
-  removeProduct: (productId) =>
-    request.delete(`/api/v1/admin/products/${productId}`)
+  fetchSellerProfiles: ({
+    accessToken,
+    status = 'PENDING_REVIEW',
+    page = 0,
+    size = 20
+  } = {}) =>
+    request.get('/api/v1/admin/seller-profile/all', {
+      headers: authHeader(accessToken),
+      params: {status, page, size}
+  }),
+  fetchCategories: ({accessToken, page = 0, size = 50} = {}) =>
+    request.get('/api/v1/category/all', {
+      headers: authHeader(accessToken),
+      params: {page, size}
+    }),
+  searchCategories: ({accessToken, name} = {}) =>
+    request.get('/api/v1/category/all/by-name-containing', {
+      headers: authHeader(accessToken),
+      params: {name}
+    }),
+  createCategory: ({accessToken, payload} = {}) =>
+    request.post('/api/v1/category', payload, {
+      headers: authHeader(accessToken)
+    }),
+  confirmOrRejectSeller: ({
+    accessToken,
+    sellerProfileId,
+    decision
+  } = {}) =>
+    request.put('/api/v1/admin/confirm-or-reject-seller', null, {
+      headers: authHeader(accessToken),
+      params: {
+        sellerProfileId,
+        value: decision
+      }
+    }),
+  getMerchantDocumentUrl: (documentId) =>
+    buildApiUrl(`/api/v1/admin/merchant-document/${documentId}`),
+  fetchCatalogs: ({accessToken} = {}) =>
+    request.get('/api/v1/catalog/all', {
+      headers: authHeader(accessToken)
+    }),
+  createCatalog: ({accessToken, payload} = {}) =>
+    request.post('/api/v1/catalog', payload, {
+      headers: authHeader(accessToken)
+    }),
+  updateCatalog: ({accessToken, payload} = {}) =>
+    request.put('/api/v1/catalog', payload, {
+      headers: authHeader(accessToken)
+    }),
+  fetchCharacteristics: ({accessToken, page = 0, size = 20} = {}) =>
+    request.get('/api/v1/characteristic/all', {
+      headers: authHeader(accessToken),
+      params: {page, size}
+    }),
+  searchCharacteristics: ({accessToken, query} = {}) =>
+    request.get('/api/v1/characteristic/all/by-name-containing', {
+      headers: authHeader(accessToken),
+      params: {name: query}
+    }),
+  createCharacteristic: ({accessToken, payload} = {}) =>
+    request.post('/api/v1/characteristic', payload, {
+      headers: authHeader(accessToken)
+    }),
+  fetchSubCategories: ({accessToken, page = 0, size = 50} = {}) =>
+    request.get('/api/v1/sub-category/all', {
+      headers: authHeader(accessToken),
+      params: {page, size}
+    }),
+  searchSubCategories: ({accessToken, name} = {}) =>
+    request.get('/api/v1/sub-category/all/by-name-containing', {
+      headers: authHeader(accessToken),
+      params: {name}
+    }),
+  createSubCategory: ({accessToken, payload} = {}) =>
+    request.post('/api/v1/sub-category', payload, {
+      headers: authHeader(accessToken)
+    }),
+  fetchPermissions: ({accessToken} = {}) =>
+    request.get('/api/v1/permissions/all', {
+      headers: authHeader(accessToken)
+    }),
+  createPermission: ({accessToken, name} = {}) =>
+    request.post('/api/v1/permissions', null, {
+      headers: authHeader(accessToken),
+      params: {permissionName: name}
+    }),
+  searchPermissions: ({accessToken, name} = {}) =>
+    request.get('/api/v1/permissions/by-name', {
+      headers: authHeader(accessToken),
+      params: {permissionName: name}
+    }),
+  createAdminUser: ({accessToken, payload} = {}) =>
+    request.post('/api/v1/admin/add', payload, {
+      headers: authHeader(accessToken)
+    }),
+  fetchUsers: ({accessToken, page = 0, size = 20} = {}) =>
+    request.get('/api/v1/admin/all/users', {
+      headers: authHeader(accessToken),
+      params: {page, size}
+    }),
+  givePermissionToUser: ({accessToken, permissionId, userId} = {}) =>
+    request.post('/api/v1/permissions/give-permission', null, {
+      headers: authHeader(accessToken),
+      params: {permissionId, userId}
+    })
 };
 
 const defaultExport = {

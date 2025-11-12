@@ -1,6 +1,8 @@
-import {all, delay, put, select, takeLatest} from 'redux-saga/effects';
+import {all, call, delay, put, select, takeLatest} from 'redux-saga/effects';
 import Actions from '../actions';
 import get from 'lodash.get';
+import {api} from 'services';
+import {toast} from 'react-toastify';
 
 const overviewMock = {
   cards: [
@@ -61,65 +63,6 @@ const overviewMock = {
   ]
 };
 
-const catalogMock = {
-  lastUpdated: new Date().toISOString(),
-  tree: [
-    {
-      id: 'electronics',
-      name: 'Электроника',
-      code: 'ELEC',
-      products: 1240,
-      visibility: 'public',
-      children: [
-        {id: 'smartphones', name: 'Смартфоны', code: 'ELEC_SM', products: 420, visibility: 'public'},
-        {id: 'laptops', name: 'Ноутбуки', code: 'ELEC_LT', products: 180, visibility: 'public'},
-        {id: 'audio', name: 'Аудио', code: 'ELEC_AD', products: 210, visibility: 'private'}
-      ]
-    },
-    {
-      id: 'home',
-      name: 'Дом и интерьер',
-      code: 'HOME',
-      products: 980,
-      visibility: 'public',
-      children: [
-        {id: 'kitchen', name: 'Кухня', code: 'HOME_KT', products: 320, visibility: 'public'},
-        {id: 'decor', name: 'Декор', code: 'HOME_DC', products: 140, visibility: 'private'}
-      ]
-    },
-    {
-      id: 'fashion',
-      name: 'Мода',
-      code: 'FASH',
-      products: 1560,
-      visibility: 'public',
-      children: [
-        {id: 'men', name: 'Мужская одежда', code: 'FASH_M', products: 480, visibility: 'public'},
-        {id: 'women', name: 'Женская одежда', code: 'FASH_W', products: 560, visibility: 'public'},
-        {id: 'footwear', name: 'Обувь', code: 'FASH_F', products: 310, visibility: 'public'}
-      ]
-    }
-  ],
-  attributes: [
-    {
-      group: 'Общие',
-      items: [
-        {id: 'brand', name: 'Бренд', usage: '78%'},
-        {id: 'country', name: 'Страна производства', usage: '65%'},
-        {id: 'warranty', name: 'Гарантия', usage: '52%'}
-      ]
-    },
-    {
-      group: 'Технические',
-      items: [
-        {id: 'screen', name: 'Диагональ экрана', usage: '41%'},
-        {id: 'battery', name: 'Ёмкость аккумулятора', usage: '38%'},
-        {id: 'material', name: 'Материал корпуса', usage: '24%'}
-      ]
-    }
-  ]
-};
-
 const pendingProductsMock = [
   {
     id: 'pn-2001',
@@ -153,135 +96,43 @@ const pendingProductsMock = [
   }
 ];
 
-const merchantsMock = {
-  summary: {
-    total: 312,
-    pending: 18,
-    approved: 274,
-    rejected: 20
-  },
-  queue: [
-    {
-      id: 'sp-1001',
-      authUserId: 'au-1001',
-      status: 'PENDING_REVIEW',
-      submittedAt: '2025-10-21T10:30:00Z',
-      merchant: {
-        id: 'm-5001',
-        legalName: 'Fresh Market LLC',
-        type: 'LIMITED_LIABILITY_COMPANY',
-        taxpayerIdentificationNumber: '305123456',
-        ifut: '4789',
-        phoneNumber: '+998 90 123 45 67',
-        accountName: 'ООО «Fresh Market»',
-        mfoBankCode: '01112',
-        ifutBankCode: '9988',
-        location: {
-          region: 'Ташкентская область',
-          district: 'Янгиюльский район',
-          street: 'ул. Навои',
-          building: '12А'
-        },
-        documents: [
-          {
-            id: 'doc-1',
-            merchantId: 'm-5001',
-            originalFilename: 'biz-license.pdf',
-            path: '/mock/uploads/biz-license.pdf',
-            type: 'BUSINESS_LICENSE',
-            sizeBytes: 512000,
-            contentType: 'application/pdf',
-            uploadedAt: '2025-10-21T08:15:00Z',
-            uploadedByUserId: 'au-1001'
-          },
-          {
-            id: 'doc-2',
-            merchantId: 'm-5001',
-            originalFilename: 'director-passport.jpg',
-            type: 'PASSPORT_OF_DIRECTOR',
-            sizeBytes: 420000,
-            contentType: 'image/jpeg',
-            uploadedAt: '2025-10-21T08:20:00Z',
-            uploadedByUserId: 'au-1001'
-          }
-        ]
+const extractPage = (response) => get(response, 'data', response) || {};
+
+const extractTotalElements = (response) => get(extractPage(response), 'totalElements', 0);
+
+const normalizeSellerProfiles = (items = []) =>
+  items.map(item => {
+    const sellerProfile = get(item, 'sellerProfile', {}) || {};
+    const merchant = get(sellerProfile, 'merchant', {}) || {};
+    const documents = Array.isArray(merchant.documents)
+      ? merchant.documents.map(doc => ({
+        ...doc,
+        downloadUrl: api.master.getMerchantDocumentUrl(doc.id)
+      }))
+      : [];
+    const normalizedMerchant = {
+      ...merchant,
+      documents
+    };
+    return {
+      id: sellerProfile.id || get(item, 'id'),
+      sellerProfileId: sellerProfile.id || get(item, 'id'),
+      status: sellerProfile.status || item.status,
+      merchant: normalizedMerchant,
+      sellerProfile: {
+        ...sellerProfile,
+        merchant: normalizedMerchant
       },
-      notes: ['Ожидает проверку бизнес-лицензии']
-    },
-    {
-      id: 'sp-1002',
-      authUserId: 'au-1002',
-      status: 'PENDING_REVIEW',
-      submittedAt: '2025-10-21T11:05:00Z',
-      merchant: {
-        id: 'm-5002',
-        legalName: 'Healthy Delivery',
-        type: 'SOLE_PROPRIETORSHIP',
-        taxpayerIdentificationNumber: '305654321',
-        ifut: '5120',
-        phoneNumber: '+998 93 765 43 21',
-        accountName: 'ИП «Healthy Delivery»',
-        mfoBankCode: '01015',
-        ifutBankCode: '7770',
-        location: {
-          region: 'г. Ташкент',
-          district: 'Мирабадский район',
-          street: 'ул. Фидокорлар',
-          building: '44B'
-        },
-        documents: [
-          {
-            id: 'doc-3',
-            merchantId: 'm-5002',
-            originalFilename: 'appointment-order.pdf',
-            type: 'APPOINTMENT_ORDER_OF_DIRECTOR',
-            sizeBytes: 268000,
-            contentType: 'application/pdf',
-            uploadedAt: '2025-10-21T09:40:00Z',
-            uploadedByUserId: 'au-1002'
-          }
-        ]
+      applicant: {
+        firstName: item.firstName,
+        lastName: item.lastName,
+        middleName: item.middleName,
+        phoneNumber: item.phoneNumber
       },
-      notes: ['Не хватает телефонного номера склада']
-    },
-    {
-      id: 'sp-1003',
-      authUserId: 'au-1003',
-      status: 'PENDING_REVIEW',
-      submittedAt: '2025-10-21T12:40:00Z',
-      merchant: {
-        id: 'm-5003',
-        legalName: 'Gadget Planet',
-        type: 'LIMITED_PARTNERSHIP',
-        taxpayerIdentificationNumber: '309876543',
-        ifut: '6201',
-        phoneNumber: '+998 97 777 00 55',
-        accountName: 'Gadget Planet LP',
-        mfoBankCode: '01021',
-        ifutBankCode: '8899',
-        location: {
-          region: 'Самаркандская область',
-          district: 'г. Самарканд',
-          street: 'пр. Улугбека',
-          building: '7'
-        },
-        documents: [
-          {
-            id: 'doc-4',
-            merchantId: 'm-5003',
-            originalFilename: 'license.pdf',
-            type: 'BUSINESS_LICENSE',
-            sizeBytes: 830000,
-            contentType: 'application/pdf',
-            uploadedAt: '2025-10-21T11:45:00Z',
-            uploadedByUserId: 'au-1003'
-          }
-        ]
-      },
+      submittedAt: documents.length ? documents[0].uploadedAt : null,
       notes: []
-    }
-  ]
-};
+    };
+  });
 
 function* fetchOverview() {
   try {
@@ -292,10 +143,25 @@ function* fetchOverview() {
   }
 }
 
-function* fetchCatalog() {
+function* fetchCatalog({payload}) {
   try {
-    yield delay(180);
-    yield put(Actions.MASTER_FETCH_CATALOG.success(catalogMock));
+    const token = yield select(state => get(state, 'auth.token'));
+    const response = yield call(api.master.fetchCatalogs, {accessToken: token});
+    const catalogs = extractPage(response) || [];
+    const items = (Array.isArray(catalogs) ? catalogs : get(catalogs, 'data', []))
+      .map(item => ({
+        id: get(item, 'id'),
+        nameUz: get(item, 'nameUz'),
+        nameEn: get(item, 'nameEn'),
+        nameRu: get(item, 'nameRu'),
+        published: !!get(item, 'published'),
+        createdAt: get(item, 'createdAt'),
+        updatedAt: get(item, 'updatedAt')
+      }));
+    yield put(Actions.MASTER_FETCH_CATALOG.success({
+      items,
+      lastUpdated: new Date().toISOString()
+    }));
   } catch (error) {
     yield put(Actions.MASTER_FETCH_CATALOG.failure(error));
   }
@@ -310,34 +176,356 @@ function* fetchPendingProducts() {
   }
 }
 
+function* fetchCategories({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const query = get(payload, 'query', '').trim();
+    if (query) {
+      const response = yield call(api.master.searchCategories, {
+        accessToken: token,
+        name: query
+      });
+      yield put(Actions.MASTER_FETCH_CATEGORIES.success({
+        items: get(response, 'data', response) || [],
+        page: 0,
+        size: 50,
+        total: get(response, 'data.length', 0)
+      }));
+      return;
+    }
+    const page = get(payload, 'page', 0);
+    const size = get(payload, 'size', 50);
+    const response = yield call(api.master.fetchCategories, {
+      accessToken: token,
+      page,
+      size
+    });
+    const pageData = extractPage(response);
+    yield put(Actions.MASTER_FETCH_CATEGORIES.success({
+      items: get(pageData, 'content', []),
+      page: get(pageData, 'number', page),
+      size: get(pageData, 'size', size),
+      total: get(pageData, 'totalElements', 0)
+    }));
+  } catch (error) {
+    yield put(Actions.MASTER_FETCH_CATEGORIES.failure(error));
+  }
+}
+
+function* createCategory({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.createCategory, {
+      accessToken: token,
+      payload: get(payload, 'category')
+    });
+    yield put(Actions.MASTER_CREATE_CATEGORY.success());
+    yield put(Actions.MASTER_FETCH_CATEGORIES.request());
+    toast.success('Категория создана');
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_CATEGORY.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось создать категорию');
+  }
+}
+
 function* fetchMerchants() {
   try {
-    yield delay(200);
-    yield put(Actions.MASTER_FETCH_MERCHANTS.success(merchantsMock));
+    const token = yield select(state => get(state, 'auth.token'));
+    const pendingResponse = yield call(api.master.fetchSellerProfiles, {
+      accessToken: token,
+      status: 'PENDING_REVIEW',
+      page: 0,
+      size: 50
+    });
+    const pendingPage = extractPage(pendingResponse);
+    const queue = normalizeSellerProfiles(get(pendingPage, 'content', []));
+    const [approvedResponse, rejectedResponse, draftsResponse] = yield all([
+      call(api.master.fetchSellerProfiles, {
+        accessToken: token,
+        status: 'APPROVED',
+        page: 0,
+        size: 1
+      }),
+      call(api.master.fetchSellerProfiles, {
+        accessToken: token,
+        status: 'REJECTED',
+        page: 0,
+        size: 1
+      }),
+      call(api.master.fetchSellerProfiles, {
+        accessToken: token,
+        status: 'NOT_SUBMITTED',
+        page: 0,
+        size: 1
+      })
+    ]);
+    const summary = {
+      pending: extractTotalElements(pendingResponse),
+      approved: extractTotalElements(approvedResponse),
+      rejected: extractTotalElements(rejectedResponse),
+      drafts: extractTotalElements(draftsResponse)
+    };
+    summary.total = summary.pending + summary.approved + summary.rejected + summary.drafts;
+    yield put(Actions.MASTER_FETCH_MERCHANTS.success({queue, summary}));
   } catch (error) {
     yield put(Actions.MASTER_FETCH_MERCHANTS.failure(error));
   }
 }
 
 function* updateMerchantStatus({payload}) {
-  const merchantId = get(payload, 'merchantId');
-  const status = get(payload, 'status');
-  if (!merchantId || !status) {
-    return;
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const sellerProfileId = get(payload, 'sellerProfileId') || get(payload, 'merchantId');
+    const decision = (get(payload, 'decision') || '').toUpperCase();
+    if (!sellerProfileId || !decision) {
+      return;
+    }
+    yield call(api.master.confirmOrRejectSeller, {
+      accessToken: token,
+      sellerProfileId,
+      decision
+    });
+    yield put(Actions.MASTER_UPDATE_MERCHANT_STATUS.success({sellerProfileId, decision}));
+    yield put(Actions.MASTER_FETCH_MERCHANTS.request());
+  } catch (error) {
+    yield put(Actions.MASTER_UPDATE_MERCHANT_STATUS.failure(error));
+    const message = get(error, 'response.data.message') || 'Не удалось применить решение. Попробуйте снова.';
+    toast.error(message);
   }
-  const merchants = yield select(state => get(state, 'master.merchants.queue', []));
-  const merchant = merchants.find(item => get(item, 'id') === merchantId);
-  if (!merchant) {
-    return;
+}
+
+function* fetchPermissionsSaga({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const query = (get(payload, 'query') || '').trim();
+    let response;
+    if (query) {
+      response = yield call(api.master.searchPermissions, {accessToken: token, name: query});
+      yield put(Actions.MASTER_FETCH_PERMISSIONS.success({items: get(response, 'data', response) || []}));
+    } else {
+      response = yield call(api.master.fetchPermissions, {accessToken: token});
+      yield put(Actions.MASTER_FETCH_PERMISSIONS.success({items: get(response, 'data', response) || []}));
+    }
+  } catch (error) {
+    yield put(Actions.MASTER_FETCH_PERMISSIONS.failure(error));
   }
-  const updatedMerchant = {
-    ...merchant,
-    status,
-    reviewer: get(payload, 'reviewer', 'Система'),
-    reviewedAt: new Date().toISOString(),
-    notes: get(payload, 'notes', merchant.notes)
-  };
-  yield put(Actions.MASTER_UPDATE_MERCHANT_STATUS.success({merchantId, merchant: updatedMerchant, status}));
+}
+
+function* createPermissionSaga({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.createPermission, {
+      accessToken: token,
+      name: get(payload, 'name')
+    });
+    yield put(Actions.MASTER_CREATE_PERMISSION.success());
+    yield put(Actions.MASTER_FETCH_PERMISSIONS.request());
+    toast.success('Разрешение создано');
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_PERMISSION.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось создать разрешение');
+  }
+}
+
+function* givePermissionSaga({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.givePermissionToUser, {
+      accessToken: token,
+      permissionId: get(payload, 'permissionId'),
+      userId: get(payload, 'userId')
+    });
+    yield put(Actions.MASTER_GIVE_PERMISSION.success());
+    toast.success('Право успешно выдано');
+  } catch (error) {
+    yield put(Actions.MASTER_GIVE_PERMISSION.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось выдать право');
+  }
+}
+
+function* fetchAdminUsers({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const page = get(payload, 'page', 0);
+    const size = get(payload, 'size', 20);
+    const response = yield call(api.master.fetchUsers, {
+      accessToken: token,
+      page,
+      size
+    });
+    const pageData = extractPage(response);
+    yield put(Actions.MASTER_FETCH_ADMIN_USERS.success({
+      items: get(pageData, 'content', []),
+      page: get(pageData, 'number', page),
+      size: get(pageData, 'size', size),
+      total: get(pageData, 'totalElements', 0)
+    }));
+  } catch (error) {
+    yield put(Actions.MASTER_FETCH_ADMIN_USERS.failure(error));
+  }
+}
+
+function* createAdminUser({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.createAdminUser, {
+      accessToken: token,
+      payload: get(payload, 'user')
+    });
+    yield put(Actions.MASTER_CREATE_ADMIN_USER.success());
+    yield put(Actions.MASTER_FETCH_ADMIN_USERS.request());
+    toast.success('Администратор создан');
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_ADMIN_USER.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось создать администратора');
+  }
+}
+function* createCatalog({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.createCatalog, {
+      accessToken: token,
+      payload: get(payload, 'catalog')
+    });
+    yield put(Actions.MASTER_CREATE_CATALOG.success());
+    yield put(Actions.MASTER_FETCH_CATALOG.request());
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_CATALOG.failure(error));
+  }
+}
+
+function* updateCatalog({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.updateCatalog, {
+      accessToken: token,
+      payload: get(payload, 'catalog')
+    });
+    yield put(Actions.MASTER_UPDATE_CATALOG.success());
+    yield put(Actions.MASTER_FETCH_CATALOG.request());
+  } catch (error) {
+    yield put(Actions.MASTER_UPDATE_CATALOG.failure(error));
+  }
+}
+
+function* fetchCharacteristics({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const query = (get(payload, 'query') || '').trim();
+    if (query) {
+      const response = yield call(api.master.searchCharacteristics, {
+        accessToken: token,
+        query
+      });
+      const data = get(response, 'data', response) || [];
+      const items = (Array.isArray(data) ? data : []).map(item => ({
+        id: get(item, 'id'),
+        nameUz: get(item, 'nameUz'),
+        nameEn: get(item, 'nameEn'),
+        nameRu: get(item, 'nameRu'),
+        options: Array.isArray(item.options) ? item.options : []
+      }));
+      yield put(Actions.MASTER_FETCH_CHARACTERISTICS.success({
+        items,
+        page: 0,
+        size: items.length,
+        total: items.length
+      }));
+      return;
+    }
+    const page = get(payload, 'page', 0);
+    const size = get(payload, 'size', 20);
+    const response = yield call(api.master.fetchCharacteristics, {
+      accessToken: token,
+      page,
+      size
+    });
+    const pageData = extractPage(response);
+    const items = (get(pageData, 'content') || []).map(item => ({
+      id: get(item, 'id'),
+      nameUz: get(item, 'nameUz'),
+      nameEn: get(item, 'nameEn'),
+      nameRu: get(item, 'nameRu'),
+      options: Array.isArray(item.options) ? item.options : []
+    }));
+    yield put(Actions.MASTER_FETCH_CHARACTERISTICS.success({
+      items,
+      page: get(pageData, 'number', page),
+      size: get(pageData, 'size', size),
+      total: get(pageData, 'totalElements', items.length)
+    }));
+  } catch (error) {
+    yield put(Actions.MASTER_FETCH_CHARACTERISTICS.failure(error));
+  }
+}
+
+function* createCharacteristic({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.createCharacteristic, {
+      accessToken: token,
+      payload: get(payload, 'characteristic')
+    });
+    yield put(Actions.MASTER_CREATE_CHARACTERISTIC.success());
+    yield put(Actions.MASTER_FETCH_CHARACTERISTICS.request());
+    toast.success('Характеристика сохранена');
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_CHARACTERISTIC.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось сохранить характеристику');
+  }
+}
+
+function* fetchSubCategories({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const query = (get(payload, 'query') || '').trim();
+    if (query) {
+      const response = yield call(api.master.searchSubCategories, {
+        accessToken: token,
+        name: query
+      });
+      const items = get(response, 'data', response) || [];
+      yield put(Actions.MASTER_FETCH_SUBCATEGORIES.success({
+        items,
+        page: 0,
+        size: items.length,
+        total: items.length
+      }));
+      return;
+    }
+    const page = get(payload, 'page', 0);
+    const size = get(payload, 'size', 50);
+    const response = yield call(api.master.fetchSubCategories, {
+      accessToken: token,
+      page,
+      size
+    });
+    const pageData = extractPage(response);
+    yield put(Actions.MASTER_FETCH_SUBCATEGORIES.success({
+      items: get(pageData, 'content', []),
+      page: get(pageData, 'number', page),
+      size: get(pageData, 'size', size),
+      total: get(pageData, 'totalElements', 0)
+    }));
+  } catch (error) {
+    yield put(Actions.MASTER_FETCH_SUBCATEGORIES.failure(error));
+  }
+}
+
+function* createSubCategory({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.createSubCategory, {
+      accessToken: token,
+      payload: get(payload, 'subCategory')
+    });
+    yield put(Actions.MASTER_CREATE_SUBCATEGORY.success());
+    yield put(Actions.MASTER_FETCH_SUBCATEGORIES.request());
+    toast.success('Подкатегория создана');
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_SUBCATEGORY.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось создать подкатегорию');
+  }
 }
 
 function* approveProduct({payload}) {
@@ -380,11 +568,24 @@ export default function* MasterSaga() {
     takeLatest(Actions.MASTER_FETCH_OVERVIEW.TRIGGER, fetchOverview),
     takeLatest(Actions.MASTER_FETCH_OVERVIEW.REQUEST, fetchOverview),
     takeLatest(Actions.MASTER_FETCH_CATALOG.REQUEST, fetchCatalog),
+    takeLatest(Actions.MASTER_CREATE_CATALOG.REQUEST, createCatalog),
+    takeLatest(Actions.MASTER_UPDATE_CATALOG.REQUEST, updateCatalog),
+    takeLatest(Actions.MASTER_FETCH_CATEGORIES.REQUEST, fetchCategories),
+    takeLatest(Actions.MASTER_CREATE_CATEGORY.REQUEST, createCategory),
     takeLatest(Actions.MASTER_FETCH_PENDING_PRODUCTS.REQUEST, fetchPendingProducts),
     takeLatest(Actions.MASTER_FETCH_MERCHANTS.REQUEST, fetchMerchants),
     takeLatest(Actions.MASTER_APPROVE_PRODUCT.REQUEST, approveProduct),
     takeLatest(Actions.MASTER_UPDATE_PRODUCT_FLAGS.REQUEST, updateProductFlags),
     takeLatest(Actions.MASTER_REMOVE_PRODUCT.REQUEST, removeProduct),
-    takeLatest(Actions.MASTER_UPDATE_MERCHANT_STATUS.REQUEST, updateMerchantStatus)
+    takeLatest(Actions.MASTER_UPDATE_MERCHANT_STATUS.REQUEST, updateMerchantStatus),
+    takeLatest(Actions.MASTER_FETCH_CHARACTERISTICS.REQUEST, fetchCharacteristics),
+    takeLatest(Actions.MASTER_CREATE_CHARACTERISTIC.REQUEST, createCharacteristic),
+    takeLatest(Actions.MASTER_FETCH_SUBCATEGORIES.REQUEST, fetchSubCategories),
+    takeLatest(Actions.MASTER_CREATE_SUBCATEGORY.REQUEST, createSubCategory),
+    takeLatest(Actions.MASTER_FETCH_PERMISSIONS.REQUEST, fetchPermissionsSaga),
+    takeLatest(Actions.MASTER_CREATE_PERMISSION.REQUEST, createPermissionSaga),
+    takeLatest(Actions.MASTER_GIVE_PERMISSION.REQUEST, givePermissionSaga),
+    takeLatest(Actions.MASTER_FETCH_ADMIN_USERS.REQUEST, fetchAdminUsers),
+    takeLatest(Actions.MASTER_CREATE_ADMIN_USER.REQUEST, createAdminUser)
   ]);
 }

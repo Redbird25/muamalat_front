@@ -1,0 +1,65 @@
+.master-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.master-card--user {
+  border: 1px solid #e5e5f5;
+  border-radius: 12px;
+  padding: 14px;
+  background: #fff;
+  text-align: left;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.master-card--user:hover {
+  border-color: rgba(244, 212, 138, 0.8);
+  box-shadow: 0 16px 28px -22px rgba(31, 29, 42, 0.4);
+  transform: translateY(-2px);
+}
+
+.master-card--user:focus-visible {
+  outline: 2px solid rgba(190, 156, 60, 0.7);
+  outline-offset: 2px;
+}
+
+.master-card--user.is-active {
+  border-color: #212640;
+  box-shadow: 0 0 0 2px rgba(33, 38, 64, 0.15);
+}
+
+.master-card__title {
+  font-weight: 600;
+  color: #212640;
+}
+
+.master-card__meta {
+  font-size: 13px;
+  color: #75758b;
+  margin-top: 4px;
+}
+
+.master-card__tags {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.master-tag.master-tag--mini {
+  font-size: 11px;
+  padding: 2px 6px;
+}
+
+.master-pagination {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.master-pagination__status {
+  font-size: 13px;
+  color: #212640;
+}

@@ -1,0 +1,21 @@
+.characteristic-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.characteristic-options__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  align-items: end;
+}
+
+.characteristic-options__add,
+.characteristic-options__remove {
+  width: fit-content;
+}
+
+.characteristic-options__remove {
+  justify-self: flex-start;
+}

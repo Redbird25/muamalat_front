@@ -51,6 +51,7 @@ const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const LoginCourier = lazy(() => import("./pages/Courier/IsLogin"))
 const MasterDashboard = lazy(() => import("./pages/Master/Dashboard"));
 const MasterCatalog = lazy(() => import("./pages/Master/Catalog"));
+const MasterAccess = lazy(() => import("./pages/Master/Access"));
 const MasterModeration = lazy(() => import("./pages/Master/Moderation"));
 const MasterPromotions = lazy(() => import("./pages/Master/Promotions"));
 const MasterMerchants = lazy(() => import("./pages/Master/Merchants"));
@@ -130,6 +131,10 @@ const privateRoutes = {
         {
           path: "merchants/:profileId/document/:documentId",
           element: <MerchantsPreview/>
+        },
+        {
+          path: "access",
+          element: <MasterAccess/>
         },
         {
           path: "moderation",

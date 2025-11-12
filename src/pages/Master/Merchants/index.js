@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import get from 'lodash.get';
 import * as SolarIconSet from 'solar-icon-set';
 import Actions from '../../../redux/actions';
+import './index.css';
 
 const statusChip = (status = '') => {
   switch ((status || '').toUpperCase()) {
@@ -69,7 +70,7 @@ const formatSize = (bytes) => {
   return `${gb.toFixed(1)} ГБ`;
 };
 
-const resolveDocUrl = (doc) => doc?.path || doc?.url || doc?.downloadUrl || '';
+const resolveDocUrl = (doc) => doc?.downloadUrl || doc?.url || doc?.path || '';
 
 const MerchantsPage = () => {
   const dispatch = useDispatch();
@@ -96,23 +97,24 @@ const MerchantsPage = () => {
   );
 
   const merchantInfo = get(selectedProfile, 'merchant', {}) || {};
+  const applicant = get(selectedProfile, 'applicant', {}) || {};
   const location = get(merchantInfo, 'location', {}) || {};
   const documents = Array.isArray(merchantInfo.documents) ? merchantInfo.documents : [];
   const locationSummary = [location.region, location.district, location.street, location.building].filter(Boolean).join(', ');
 
-  const onDecision = (status) => {
+  const onDecision = (decision) => {
     if (!selectedProfile) return;
+    const normalized = (decision || '').toUpperCase() === 'REJECTED' ? 'REJECTED' : 'APPROVED';
     dispatch(Actions.MASTER_UPDATE_MERCHANT_STATUS.request({
-      merchantId: selectedProfile.id,
-      status,
-      reviewer: 'Master Admin'
+      sellerProfileId: selectedProfile.sellerProfileId || selectedProfile.id,
+      decision: normalized
     }));
   };
 
   return (
     <div className="master-merchants">
-      <section className="master-section">
-        <div className="master-section__header">
+      <section className="master-section master-section--compact">
+        <div className="master-section__header master-section__header--compact">
           <div>
             <h2 className="master-section__title">Очередь мерчантов</h2>
             <p className="master-section__subtitle">Просмотр анкет и документов перед подключением</p>
@@ -120,16 +122,17 @@ const MerchantsPage = () => {
           <span className="master-tag">В ожидании: {summary.pending || 0}</span>
         </div>
 
-        <div className="master-grid master-grid--cols-4">
+        <div className="master-stats master-stats--dense">
           {[
-            {id: 'total', title: 'Всего мерчантов', value: summary.total || 0},
+            {id: 'total', title: 'Всего', value: summary.total || 0},
             {id: 'pending', title: 'На модерации', value: summary.pending || 0},
             {id: 'approved', title: 'Одобрено', value: summary.approved || 0},
-            {id: 'rejected', title: 'Отклонено', value: summary.rejected || 0}
+            {id: 'rejected', title: 'Отклонено', value: summary.rejected || 0},
+            {id: 'drafts', title: 'Черновики', value: summary.drafts || 0}
           ].map(card => (
-            <article className="master-card" key={card.id}>
-              <p className="master-card__label">{card.title}</p>
-              <p className="master-card__value">{card.value}</p>
+            <article className="master-stats__item" key={card.id}>
+              <p className="master-stats__label">{card.title}</p>
+              <p className="master-stats__value">{card.value}</p>
             </article>
           ))}
         </div>
@@ -174,7 +177,12 @@ const MerchantsPage = () => {
                       <div className="master-table__primary-text">{info.legalName || '—'}</div>
                       <span className="master-table__secondary-text">Профиль ID: {profileItem.id}</span>
                     </td>
-                    <td data-label="Контакты">{info.phoneNumber || '—'}</td>
+                    <td data-label="Контакты">
+                      <div className="master-table__primary-text">{info.phoneNumber || '—'}</div>
+                      <span className="master-table__secondary-text">
+                        {get(profileItem, 'applicant.firstName', '')} {get(profileItem, 'applicant.lastName', '')}
+                      </span>
+                    </td>
                     <td data-label="Подача">{formatDate(submitted)}</td>
                     <td data-label="Статус">
                       <span className={statusChip(profileItem.status)}>{statusLabel(profileItem.status)}</span>
@@ -202,7 +210,12 @@ const MerchantsPage = () => {
                 <div>
                   <span className="master-tag">Профиль ID: {selectedProfile.id}</span>
                   <h3 className="master-detail__title">{merchantInfo.legalName || '—'}</h3>
-                  <p className="master-table__secondary-text">Форма бизнеса: {businessTypeLabel(merchantInfo.type)}</p>
+                  <p className="master-table__secondary-text">
+                    Контакт: {applicant.firstName || '—'} {applicant.lastName || ''}
+                  </p>
+                  <p className="master-table__secondary-text">
+                    Форма бизнеса: {businessTypeLabel(merchantInfo.type)}
+                  </p>
                 </div>
                 <div className="master-detail__meta">
                   <span>ИНН: {merchantInfo.taxpayerIdentificationNumber || '—'}</span>

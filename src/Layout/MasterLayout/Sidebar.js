@@ -57,6 +57,12 @@ const Sidebar = ({collapsed = false, isMobileOpen = false, onCloseMobile}) => {
       label: 'Промо и статусы',
       description: 'Хиты, акции, скидки',
       icon: <SolarIconSet.Fire svgProps={{width: 22, height: 22}} iconStyle="Bold" color="#E2C881"/>
+    },
+    {
+      to: '/dashboard/access',
+      label: 'Доступ и роли',
+      description: 'Права и администраторы',
+      icon: <SolarIconSet.LockPassword svgProps={{width: 22, height: 22}} iconStyle="Bold" color="#E2C881"/>
     }
   ];
 

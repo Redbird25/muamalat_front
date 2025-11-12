@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import {Field, Form, Formik} from "formik";
-import {useSelector} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import * as Yup from "yup";
 import get from "lodash.get";
@@ -12,7 +12,8 @@ import InputPhone from "../Fields/InputPhone";
 import YandexMap from "../YandexMap";
 import cart_company from "../../assets/images/cart_company.png";
 import errorClass from "../../services/ErrorClass";
-import {api} from "services";
+import {api, session} from "services";
+import {LOGIN} from "../../redux/actions";
 
 const BUSINESS_TYPES = ["ООО", "ИП", "ЯТТ"];
 const DOCUMENT_ALLOWED_TYPES = ["image/jpeg", "image/png", "image/jpg"];
@@ -163,6 +164,19 @@ const mapBusinessType = (value = "") => {
       return "SOLE_PROPRIETORSHIP";
     default:
       return "LIMITED_LIABILITY_COMPANY";
+  }
+};
+
+const mapMerchantTypeToForm = (value = "") => {
+  switch (value) {
+    case "LIMITED_LIABILITY_COMPANY":
+      return "ООО";
+    case "SOLE_PROPRIETORSHIP":
+      return "ЯТТ";
+    case "LIMITED_PARTNERSHIP":
+      return "ООО";
+    default:
+      return "ООО";
   }
 };
 
@@ -1182,7 +1196,9 @@ const mapStepKeyToIndex = () => {
 
 const SellerRegisterForm = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const {auth} = useSelector(state => state);
+  const accessToken = get(auth, "token", "");
   const [currentStep, setCurrentStep] = useState(0);
   const [countdown, setCountdown] = useState(0);
   const [verificationState, setVerificationState] = useState({
@@ -1191,7 +1207,15 @@ const SellerRegisterForm = () => {
     loadingVerify: false,
     verified: false,
   });
-  const [tokens, setTokens] = useState(null);
+  const [tokens, setTokens] = useState(() => {
+    if (accessToken) {
+      return {
+        accessToken,
+        refreshToken: session.get("refreshToken") || ""
+      };
+    }
+    return null;
+  });
   const [verificationMeta, setVerificationMeta] = useState({});
   const [regions, setRegions] = useState(DEFAULT_REGIONS);
   const [regionsLoading, setRegionsLoading] = useState(false);
@@ -1199,6 +1223,7 @@ const SellerRegisterForm = () => {
   const [districtsLoading, setDistrictsLoading] = useState(false);
   const districtsCacheRef = useRef({});
   const [submitting, setSubmitting] = useState(false);
+  const [profileStatus, setProfileStatus] = useState("");
 
   const [formState, setFormState] = useState(() => {
     const phone = extractLocalPhone(get(auth, "data.user.phone_number", ""));
@@ -1278,6 +1303,72 @@ const SellerRegisterForm = () => {
     return () => clearInterval(timer);
   }, [countdown]);
 
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const response = await api.sellerProfile.get({accessToken});
+        const data = get(response, "data", response);
+        if (!isMounted) {
+          return;
+        }
+        const merchant = get(data, "merchant");
+        if (merchant) {
+          const location = get(merchant, "location", {}) || {};
+          setFormState(prev => ({
+            ...prev,
+            business: {
+              ...prev.business,
+              legal_entity: get(merchant, "legalName", "") || "",
+              business_type: mapMerchantTypeToForm(get(merchant, "type", "")),
+              company_inn: get(merchant, "taxpayerIdentificationNumber", "") || "",
+              oked: get(merchant, "ifut", "") || "",
+              phone_number2: extractLocalPhone(get(merchant, "phoneNumber", "")) || ""
+            },
+            account: {
+              ...prev.account,
+              account_name: get(merchant, "accountName", "") || "",
+              bank_mfo: get(merchant, "mfoBankCode", "") || "",
+              oked: get(merchant, "ifutBankCode", "") || ""
+            },
+            location: {
+              ...prev.location,
+              region_id: get(location, "region", "") || "",
+              region_name: get(location, "region", "") || "",
+              district_id: get(location, "district", "") || "",
+              district_name: get(location, "district", "") || "",
+              address: get(location, "street", "") || "",
+              house: get(location, "building", "") || ""
+            }
+          }));
+        }
+        if (get(data, "status")) {
+          setProfileStatus(get(data, "status", ""));
+        }
+      } catch (error) {
+        if (isMounted) {
+          console.warn("Не удалось загрузить профиль продавца", error);
+        }
+      }
+    };
+    loadProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, [accessToken]);
+
+  useEffect(() => {
+    if (accessToken && (!tokens || tokens.accessToken !== accessToken)) {
+      setTokens({
+        accessToken,
+        refreshToken: session.get("refreshToken") || ""
+      });
+    }
+  }, [accessToken, tokens]);
+
   const invalidateVerification = () => {
     setVerificationState({
       txId: "",
@@ -1285,7 +1376,11 @@ const SellerRegisterForm = () => {
       loadingVerify: false,
       verified: false,
     });
-    setTokens(null);
+    const currentAccessToken = accessToken;
+    setTokens(currentAccessToken ? {
+      accessToken: currentAccessToken,
+      refreshToken: session.get("refreshToken") || ""
+    } : null);
     setVerificationMeta({});
     setCountdown(0);
   };
@@ -1339,16 +1434,28 @@ const SellerRegisterForm = () => {
       const result = get(response, "data", response);
       const accessToken = get(result, "accessToken", "");
       const refreshToken = get(result, "refreshToken", "");
+      const userId = get(result, "userId", "");
+      const phoneNumber = get(result, "phoneNumber", "");
       if (!accessToken || !refreshToken) {
         throw new Error("Token pair not returned");
       }
+      session.set("refreshToken", refreshToken);
+      dispatch(LOGIN.success({
+        token: accessToken,
+        user: {
+          id: userId,
+          identifier: phoneNumber,
+          phone_number: phoneNumber,
+          role_id: 4
+        }
+      }));
       setTokens({
         accessToken,
         refreshToken,
       });
       setVerificationMeta({
-        identifier: get(result, "phoneNumber", ""),
-        userId: get(result, "userId", ""),
+        identifier: phoneNumber,
+        userId,
       });
       setVerificationState(prev => ({
         ...prev,
@@ -1508,6 +1615,7 @@ const SellerRegisterForm = () => {
       }
 
       toast.success("Заявка отправлена на рассмотрение");
+      setProfileStatus("PENDING_REVIEW");
       setCurrentStep(0);
       setFormState(prev => ({
         personal: {...initialFormState.personal},
@@ -1587,10 +1695,30 @@ const SellerRegisterForm = () => {
   };
 
   const currentStepKey = stepsConfig[currentStep].key;
+  const normalizedStatus = (profileStatus || "").toUpperCase();
+  const statusMessages = {
+    NOT_SUBMITTED: "Заявка ещё не отправлена. Заполните данные и отправьте на рассмотрение.",
+    PENDING_REVIEW: "Заявка отправлена и находится на рассмотрении.",
+    APPROVED: "Профиль продавца одобрен. Вы можете управлять товарами и заказами.",
+    REJECTED: "Заявка отклонена. Обновите данные и отправьте повторно либо обратитесь в поддержку."
+  };
+  const statusVariants = {
+    NOT_SUBMITTED: "alert-warning",
+    PENDING_REVIEW: "alert-info",
+    APPROVED: "alert-success",
+    REJECTED: "alert-danger"
+  };
+  const statusMessage = statusMessages[normalizedStatus];
+  const statusClass = statusVariants[normalizedStatus] || "alert-info";
 
   return (
     <div className="flex-fill">
       <Stepper current={currentStep}/>
+      {statusMessage && (
+        <div className={`alert ${statusClass} custom-rounded-12`} role="alert">
+          {statusMessage}
+        </div>
+      )}
       {currentStepKey === "personal" && <PersonalStep {...stepProps.personal} />}
       {currentStepKey === "business" && <BusinessStep {...stepProps.business} />}
       {currentStepKey === "documents" && <DocumentsStep {...stepProps.documents} />}

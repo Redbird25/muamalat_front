@@ -32,7 +32,17 @@ const formatSize = (bytes) => {
   return `${gb.toFixed(1)} ГБ`;
 };
 
-const resolveDocUrl = (doc) => doc?.path || doc?.url || doc?.downloadUrl || '';
+const resolveDocUrl = (doc) => {
+  const direct = doc?.downloadUrl || doc?.url || doc?.path || '';
+  if (!direct) {
+    return '';
+  }
+  try {
+    return decodeURIComponent(direct);
+  } catch (error) {
+    return direct;
+  }
+};
 const isImage = (doc) => {
   const type = (doc?.contentType || '').toLowerCase();
   const name = (doc?.originalFilename || '').toLowerCase();
