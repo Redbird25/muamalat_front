@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useEffect, useMemo, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import Actions from '../../../redux/actions';
 import get from 'lodash.get';
@@ -14,9 +14,25 @@ const flagsMap = [
 const PromotionsPage = () => {
   const dispatch = useDispatch();
   const featuredProducts = useSelector(state => get(state, 'master.featuredProducts', []));
+  const productBadges = useSelector(state => get(state, 'master.productBadges.items', []));
+  const badgesLoading = useSelector(state => get(state, 'master.loading.productBadges', false));
+  const badgeMutation = useSelector(state => get(state, 'master.loading.productBadgeMutation', false));
   const [discountPreset, setDiscountPreset] = useState({type: 'percentage', value: 10});
+  const [badgeForm, setBadgeForm] = useState({
+    nameUz: '',
+    nameEn: '',
+    nameRu: '',
+    descriptionUz: '',
+    descriptionEn: '',
+    descriptionRu: ''
+  });
 
   const totalActive = useMemo(() => featuredProducts.length, [featuredProducts]);
+
+  const isBadgeFormValid = useMemo(
+    () => Object.values(badgeForm).every(value => (value || '').toString().trim().length > 0),
+    [badgeForm]
+  );
 
   const handleFlagChange = (productId, flag, checked) => {
     dispatch(Actions.MASTER_UPDATE_PRODUCT_FLAGS.request({
@@ -27,6 +43,26 @@ const PromotionsPage = () => {
 
   const handleRemove = (productId) => {
     dispatch(Actions.MASTER_REMOVE_PRODUCT.request({productId}));
+  };
+
+  useEffect(() => {
+    dispatch(Actions.MASTER_FETCH_PRODUCT_BADGES.request());
+  }, [dispatch]);
+
+  const handleBadgeSubmit = (event) => {
+    event.preventDefault();
+    if (!isBadgeFormValid || badgeMutation) {
+      return;
+    }
+    dispatch(Actions.MASTER_CREATE_PRODUCT_BADGE.request({badge: badgeForm}));
+    setBadgeForm({
+      nameUz: '',
+      nameEn: '',
+      nameRu: '',
+      descriptionUz: '',
+      descriptionEn: '',
+      descriptionRu: ''
+    });
   };
 
   return (
@@ -189,6 +225,131 @@ const PromotionsPage = () => {
               </div>
             </div>
           </div>
+        </article>
+      </section>
+
+      <section className="master-grid master-grid--cols-2">
+        <article className="master-section">
+          <div className="master-section__header">
+            <div>
+              <h2 className="master-section__title">Product badges</h2>
+              <p className="master-section__subtitle">Manage labels that surface on product cards and detail pages.</p>
+            </div>
+            <span className="master-tag">Total: {productBadges.length}</span>
+          </div>
+          {badgesLoading ? (
+            <p className="master-table__secondary-text mb-0">Loading badges...</p>
+          ) : productBadges.length ? (
+            <table className="master-table">
+              <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Description</th>
+              </tr>
+              </thead>
+              <tbody>
+              {productBadges.map((badge) => (
+                <tr key={badge.id}>
+                  <td data-label="ID">
+                    <span className="master-chip master-chip--secondary">#{badge.id}</span>
+                  </td>
+                  <td data-label="Name">
+                    <div className="master-table__primary-text">
+                      {badge.nameEn || badge.nameUz || badge.nameRu || `Badge #${badge.id}`}
+                    </div>
+                    <span className="master-table__secondary-text">
+                      {badge.nameUz || 'No Uzbek title'}
+                    </span>
+                  </td>
+                  <td data-label="Description">
+                    <div className="master-table__secondary-text">
+                      {badge.descriptionEn || badge.descriptionUz || badge.descriptionRu || 'No description'}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="master-table__secondary-text mb-0">No product badges yet.</p>
+          )}
+        </article>
+
+        <article className="master-section">
+          <div className="master-section__header">
+            <div>
+              <h2 className="master-section__title">Create badge</h2>
+              <p className="master-section__subtitle">Add multilingual labels for campaigns, bundles, or highlights.</p>
+            </div>
+          </div>
+          <form className="master-form" onSubmit={handleBadgeSubmit}>
+            <div className="master-form__grid">
+              <label className="master-form__group">
+                <span>Name (Uz)</span>
+                <input
+                  type="text"
+                  value={badgeForm.nameUz}
+                  onChange={event => setBadgeForm(prev => ({...prev, nameUz: event.target.value}))}
+                  placeholder="Masalan: Chegirma"
+                />
+              </label>
+              <label className="master-form__group">
+                <span>Name (En)</span>
+                <input
+                  type="text"
+                  value={badgeForm.nameEn}
+                  onChange={event => setBadgeForm(prev => ({...prev, nameEn: event.target.value}))}
+                  placeholder="e.g. Discount"
+                />
+              </label>
+              <label className="master-form__group">
+                <span>Name (Ru)</span>
+                <input
+                  type="text"
+                  value={badgeForm.nameRu}
+                  onChange={event => setBadgeForm(prev => ({...prev, nameRu: event.target.value}))}
+                  placeholder="For example: Promo"
+                />
+              </label>
+              <label className="master-form__group">
+                <span>Description (Uz)</span>
+                <textarea
+                  rows={2}
+                  value={badgeForm.descriptionUz}
+                  onChange={event => setBadgeForm(prev => ({...prev, descriptionUz: event.target.value}))}
+                  placeholder="Qisqa izoh"
+                />
+              </label>
+              <label className="master-form__group">
+                <span>Description (En)</span>
+                <textarea
+                  rows={2}
+                  value={badgeForm.descriptionEn}
+                  onChange={event => setBadgeForm(prev => ({...prev, descriptionEn: event.target.value}))}
+                  placeholder="Short description"
+                />
+              </label>
+              <label className="master-form__group">
+                <span>Description (Ru)</span>
+                <textarea
+                  rows={2}
+                  value={badgeForm.descriptionRu}
+                  onChange={event => setBadgeForm(prev => ({...prev, descriptionRu: event.target.value}))}
+                  placeholder="Short description in Russian"
+                />
+              </label>
+            </div>
+            <div className="master-form__actions">
+              <button
+                type="submit"
+                className="master-topbar__button master-topbar__button--primary"
+                disabled={!isBadgeFormValid || badgeMutation}
+              >
+                {badgeMutation ? 'Saving...' : 'Save badge'}
+              </button>
+            </div>
+          </form>
         </article>
       </section>
     </div>

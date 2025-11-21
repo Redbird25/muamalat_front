@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {Link} from "react-router-dom";
 import {get} from "lodash";
-import config from "../../config";
 import InputPhone from "../../components/Fields/InputPhone";
 // import card_1 from "assets/images/icon/card-1.svg"
 // import card_2 from "assets/images/icon/card-2.svg"
@@ -18,6 +17,8 @@ import {Spinner} from "../../components";
 import RecommendProducts from "../../components/RecommendProducts";
 import YandexMap from "../../components/YandexMap";
 import {LOGIN} from "../../redux/actions";
+import {resolvePrimaryImageUrl} from "../../services/utils";
+import noImage from "../../assets/images/no-image.png";
 
 const BasketOrder = () => {
   const {auth, system: {products}} = useSelector(state => state);
@@ -192,7 +193,7 @@ const BasketOrder = () => {
                               <div className="border custom-rounded-12 p-3">
                                 <div className="row">
                                   <div className="col-xxl-1 col-xl-2 d-flex align-items-center justify-content-center">
-                                    <img className={"w-100"} src={config.FILE_ROOT + get(item, "main_image")} alt="phone"/>
+                                    <img className={"w-100"} src={resolvePrimaryImageUrl(item) || noImage} alt="phone"/>
                                   </div>
 
                                   <div className="col-xxl-10 mt-xl-0 mt-3 col-xl-10">
@@ -236,7 +237,7 @@ const BasketOrder = () => {
                                       <div className="row">
                                         <div
                                           className="col-xxl-1 col-xl-2 d-flex align-items-center justify-content-center">
-                                          <img className={"w-100"} src={config.FILE_ROOT + get(item, "main_image")}
+                                          <img className={"w-100"} src={resolvePrimaryImageUrl(item) || noImage}
                                                alt="phone"/>
                                         </div>
 

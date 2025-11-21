@@ -1,6 +1,5 @@
 import React from 'react';
 import {get} from "lodash";
-import config from "../../config";
 import InputPhone from "../Fields/InputPhone";
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
@@ -8,6 +7,8 @@ import {DELETE, METHOD, UPDATE} from "../../schema/actions";
 import {toast} from "react-toastify";
 import FavouritesAction from "../../redux/functions/favourites";
 import {LOGIN} from "../../redux/actions";
+import {resolvePrimaryImageUrl} from "../../services/utils";
+import noImage from "../../assets/images/no-image.png";
 
 const ProductItem = ({
                        item,
@@ -19,6 +20,7 @@ const ProductItem = ({
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const imageSrc = resolvePrimaryImageUrl(item) || noImage;
   return (
     <div
       className={`w-xl-${col} my-3 w-lg-33 w-50`}>
@@ -139,7 +141,7 @@ const ProductItem = ({
           </button>
           <Link to={`/product/${get(item, "id")}`}>
             <img className={"product-image"}
-                 src={config.FILE_ROOT + get(item, "main_image")}
+                 src={imageSrc}
                  alt="article"/>
           </Link>
         </div>

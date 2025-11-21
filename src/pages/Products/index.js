@@ -4,7 +4,6 @@ import {get} from "lodash";
 import {LoadAll} from "../../schema/container";
 import {CREATE, DELETE, LoadAll as LoadAllDispatch, METHOD} from "../../schema/actions";
 import {Empty, Modal, Pagination, Spinner} from "../../components";
-import config from "../../config";
 import InputPhone from "../../components/Fields/InputPhone";
 import no_image from "assets/images/no-image.png"
 import MyForm from "../../schema/Form";
@@ -15,6 +14,7 @@ import {toast} from "react-toastify";
 import errorClass from "../../services/ErrorClass";
 import CustomDocumentUploading from "../../components/CustomDocumentUploading";
 import {serialize} from "object-to-formdata";
+import {resolvePrimaryImageUrl} from "../../services/utils";
 
 const Products = () => {
   const navigate = useNavigate();
@@ -260,7 +260,7 @@ const Products = () => {
                               <div className="row align-items-center">
                                 <div className="w-xl-10 w-md-25 w-sm-50 min-h-70">
                                   <div className="p-2 custom-rounded-12">
-                                    <img src={config.FILE_ROOT + get(item, "main_image")} className="w-100"
+                                    <img src={resolvePrimaryImageUrl(item) || no_image} className="w-100"
                                          alt="article"/>
                                   </div>
                                 </div>
@@ -516,7 +516,7 @@ const Products = () => {
                               <div className="row align-items-center">
                                 <div className="w-xl-10 w-md-25 w-sm-50 min-h-70">
                                   <div className="p-2 custom-rounded-12">
-                                    <img src={config.FILE_ROOT + get(item, "main_image")} className="w-100"
+                                    <img src={resolvePrimaryImageUrl(item) || no_image} className="w-100"
                                          alt="article"/>
                                   </div>
                                 </div>

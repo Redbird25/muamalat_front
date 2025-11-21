@@ -37,6 +37,9 @@ const initialState = {
   permissions: {
     items: []
   },
+  productBadges: {
+    items: []
+  },
   adminUsers: {
     items: [],
     page: 0,
@@ -71,7 +74,9 @@ const initialState = {
     permissionMutation: false,
     grantPermission: false,
     adminUsers: false,
-    adminUserMutation: false
+    adminUserMutation: false,
+    productBadges: false,
+    productBadgeMutation: false
   },
   errors: {}
 };
@@ -400,6 +405,52 @@ const MasterReducer = (state = initialState, action) => {
         ...state,
         loading: {...state.loading, grantPermission: false},
         errors: {...state.errors, grantPermission: action.payload}
+      };
+
+    case Actions.MASTER_FETCH_PRODUCT_BADGES.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, productBadges: true}
+      };
+    case Actions.MASTER_FETCH_PRODUCT_BADGES.SUCCESS:
+      return {
+        ...state,
+        productBadges: {
+          items: get(action.payload, 'items', [])
+        },
+        loading: {...state.loading, productBadges: false},
+        errors: {...state.errors, productBadges: null}
+      };
+    case Actions.MASTER_FETCH_PRODUCT_BADGES.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, productBadges: false},
+        errors: {...state.errors, productBadges: action.payload}
+      };
+
+    case Actions.MASTER_CREATE_PRODUCT_BADGE.REQUEST:
+      return {
+        ...state,
+        loading: {...state.loading, productBadgeMutation: true}
+      };
+    case Actions.MASTER_CREATE_PRODUCT_BADGE.SUCCESS: {
+      const createdBadge = get(action.payload, 'item') || get(action.payload, 'badge');
+      return {
+        ...state,
+        productBadges: {
+          items: createdBadge
+            ? upsertById(state.productBadges.items, createdBadge)
+            : state.productBadges.items
+        },
+        loading: {...state.loading, productBadgeMutation: false},
+        errors: {...state.errors, productBadgeMutation: null}
+      };
+    }
+    case Actions.MASTER_CREATE_PRODUCT_BADGE.FAILURE:
+      return {
+        ...state,
+        loading: {...state.loading, productBadgeMutation: false},
+        errors: {...state.errors, productBadgeMutation: action.payload}
       };
 
     case Actions.MASTER_FETCH_ADMIN_USERS.REQUEST:

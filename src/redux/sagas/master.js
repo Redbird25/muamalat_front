@@ -563,6 +563,41 @@ function* removeProduct({payload}) {
   yield put(Actions.MASTER_REMOVE_PRODUCT.success({productId}));
 }
 
+function* fetchProductBadges() {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const response = yield call(api.productBadges.fetchAll, {accessToken: token});
+    const items = get(response, 'data', response) || [];
+    yield put(Actions.MASTER_FETCH_PRODUCT_BADGES.success({items}));
+  } catch (error) {
+    yield put(Actions.MASTER_FETCH_PRODUCT_BADGES.failure(error));
+  }
+}
+
+function* createProductBadge({payload}) {
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    const badgePayload = get(payload, 'badge', payload);
+    const response = yield call(api.productBadges.create, {
+      accessToken: token,
+      payload: badgePayload
+    });
+    const item = get(response, 'data', response);
+    yield put(Actions.MASTER_CREATE_PRODUCT_BADGE.success({item}));
+    yield put(Actions.MASTER_FETCH_PRODUCT_BADGES.request());
+    toast.success('Product badge created');
+  } catch (error) {
+    yield put(Actions.MASTER_CREATE_PRODUCT_BADGE.failure(error));
+    const status = get(error, 'response.status');
+    const msg = get(error, 'response.data.message');
+    if (status === 403) {
+      toast.error('You need ADMIN role with ALL_PERMISSIONS or ADMIN_GENERAL_ACTIONS to create badges.');
+    } else {
+      toast.error(msg || 'Failed to create product badge');
+    }
+  }
+}
+
 export default function* MasterSaga() {
   yield all([
     takeLatest(Actions.MASTER_FETCH_OVERVIEW.TRIGGER, fetchOverview),
@@ -586,6 +621,8 @@ export default function* MasterSaga() {
     takeLatest(Actions.MASTER_CREATE_PERMISSION.REQUEST, createPermissionSaga),
     takeLatest(Actions.MASTER_GIVE_PERMISSION.REQUEST, givePermissionSaga),
     takeLatest(Actions.MASTER_FETCH_ADMIN_USERS.REQUEST, fetchAdminUsers),
-    takeLatest(Actions.MASTER_CREATE_ADMIN_USER.REQUEST, createAdminUser)
+    takeLatest(Actions.MASTER_CREATE_ADMIN_USER.REQUEST, createAdminUser),
+    takeLatest(Actions.MASTER_FETCH_PRODUCT_BADGES.REQUEST, fetchProductBadges),
+    takeLatest(Actions.MASTER_CREATE_PRODUCT_BADGE.REQUEST, createProductBadge)
   ]);
 }

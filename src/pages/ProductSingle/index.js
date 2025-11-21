@@ -5,15 +5,17 @@ import {Link, useNavigate, useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import {LoadOne, METHOD, UPDATE} from "../../schema/actions";
 import {get} from "lodash";
-import config from "../../config";
 // import logo_text from "assets/images/icon/logo-text.svg"
 import InputPhone from "../../components/Fields/InputPhone";
 import {toast} from "react-toastify";
 import FavouritesAction from "../../redux/functions/favourites";
-import {LOGIN} from "../../redux/actions";
+import Actions, {LOGIN} from "../../redux/actions";
 import RecommendProducts from "../../components/RecommendProducts";
 import {ModalLoginRegister} from "../../components";
 import ReactImageMagnify from "react-image-magnify";
+import {api} from "../../services";
+import {normalizeProductImages, resolvePrimaryImageUrl} from "../../services/utils";
+import noImage from "../../assets/images/no-image.png";
 
 const ProductSingle = () => {
   const {id} = useParams();
@@ -26,6 +28,41 @@ const ProductSingle = () => {
   const [isTab, setTab] = useState(1);
   const [isModal, setModal] = useState(false);
   const [showAllSpecifications, setShowAllSpecifications] = useState(false);
+  const [removingImages, setRemovingImages] = useState({});
+  const productData = useMemo(() => get(isDetails, 'product') || isDetails || {}, [isDetails]);
+  const productId = useMemo(() => get(productData, 'id'), [productData]);
+  const productImageEntries = useMemo(() => {
+    const normalized = normalizeProductImages(productData);
+    if (normalized.length) {
+      return normalized;
+    }
+    return [{id: 'placeholder', src: noImage, original: {}}];
+  }, [productData]);
+  const primaryImage = useMemo(
+    () => resolvePrimaryImageUrl(productData) || noImage,
+    [productData]
+  );
+  const canManageImages = useMemo(() => {
+    const roleId = parseInt(get(auth, "data.user.role_id"));
+    return get(auth, "isAuthenticated") && (roleId === 4 || roleId === 1);
+  }, [auth]);
+  const productBadges = useSelector(state => get(state, 'master.productBadges.items', []));
+  const productBadgeIds = useMemo(
+    () => get(productData, 'badgesIds', []) || get(isDetails, 'badgesIds', []),
+    [isDetails, productData]
+  );
+  const badgeLookup = useMemo(() => {
+    return productBadges.reduce((acc, badge) => {
+      if (badge && typeof badge.id !== 'undefined') {
+        acc[badge.id] = badge;
+      }
+      return acc;
+    }, {});
+  }, [productBadges]);
+  const badgesForProduct = useMemo(
+    () => productBadgeIds.map(id => badgeLookup[id]).filter(Boolean),
+    [badgeLookup, productBadgeIds]
+  );
 
   useEffect(() => {
     dispatch(LoadOne.request({
@@ -45,6 +82,45 @@ const ProductSingle = () => {
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, id]);
+
+  useEffect(() => {
+    if (!productBadges.length) {
+      dispatch(Actions.MASTER_FETCH_PRODUCT_BADGES.request());
+    }
+  }, [dispatch, productBadges.length]);
+
+  const handleRemoveImage = async (imageId) => {
+    if (!canManageImages || !imageId || !productId) {
+      return;
+    }
+    setRemovingImages(prev => ({...prev, [imageId]: true}));
+    try {
+      await api.productImages.deleteImage({
+        accessToken: get(auth, 'token'),
+        imageId,
+        productId
+      });
+      setDetails(prev => {
+        if (!prev) {
+          return prev;
+        }
+        const baseProduct = get(prev, 'product') || prev;
+        const filteredImages = (get(baseProduct, 'images', []) || [])
+          .filter(img => (get(img, 'id') || get(img, 'imageId')) !== imageId);
+        const nextProduct = {...baseProduct, images: filteredImages};
+        return get(prev, 'product') ? {...prev, product: nextProduct} : nextProduct;
+      });
+      toast.success('Removed image from product');
+    } catch (error) {
+      toast.error(get(error, 'response.data.message') || 'Could not delete image');
+    } finally {
+      setRemovingImages(prev => {
+        const next = {...prev};
+        delete next[imageId];
+        return next;
+      });
+    }
+  };
 
   const attributeGroups = useMemo(() => {
     if (!isDetails) {
@@ -336,6 +412,15 @@ const ProductSingle = () => {
             className="fs-14 fw-500 text-greyscale800">4.6&nbsp;</span>
             <i className="far fa-horizontal-rule fa-rotate-90 fs-10 text-d4d8e4"/>&nbsp;<span
               className="fs-14 text-75758b fw-500">12 отзывов</span></p>
+          {badgesForProduct.length ? (
+            <div className="d-flex flex-wrap gap-2">
+              {badgesForProduct.map(badge => (
+                <span key={badge.id} className="badge bg-light text-dark border">
+                  {badge.nameEn || badge.nameUz || badge.nameRu || `Badge #${badge.id}`}
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
 
         <div className="col-auto mb-lg-0 mb-3">
@@ -448,18 +533,10 @@ const ProductSingle = () => {
             modules={[FreeMode, Thumbs]}
             className="mySwiper2"
           >
-            {
-              (
-                get(isDetails, "product.images", []).length
-                  ? get(isDetails, "product.images", []) :
-                  [{image: get(isDetails, "product.main_image")}]
-              ).map((item, number) => {
-                const relativeImage = get(item, "image");
-                const imageSrc = relativeImage ? (config.FILE_ROOT ? `${config.FILE_ROOT}${relativeImage}` : relativeImage) : '';
-                const fallbackRelativeImage = get(isDetails, 'product.main_image');
-                const fallbackSrc = fallbackRelativeImage ? (config.FILE_ROOT ? `${config.FILE_ROOT}${fallbackRelativeImage}` : fallbackRelativeImage) : '';
-                const displaySrc = imageSrc || fallbackSrc;
-                return <SwiperSlide key={number}>
+            {productImageEntries.map((item, number) => {
+              const displaySrc = item.src || primaryImage || noImage;
+              return (
+                <SwiperSlide key={item.id || number}>
                   <div
                     className="bg-white custom-rounded-20 p-3 h-100 border-e6e5ed d-flex align-items-center justify-content-center border"
                   >
@@ -470,7 +547,7 @@ const ProductSingle = () => {
                             <ReactImageMagnify
                               {...{
                                 smallImage: {
-                                  alt: get(isDetails, 'product.name', 'product-image'),
+                                  alt: get(productData, 'name', 'product-image'),
                                   isFluidWidth: true,
                                   src: displaySrc,
                                 },
@@ -481,8 +558,8 @@ const ProductSingle = () => {
                                 },
                                 enlargedImagePosition: 'over',
                                 isHintEnabled: true,
-                                hintTextMouse: 'Удерживайте для увеличения',
-                                hintTextTouch: 'Нажмите для увеличения',
+                                hintTextMouse: 'Hold to zoom',
+                                hintTextTouch: 'Tap to zoom',
                                 lensStyle: { backgroundColor: 'rgba(255, 255, 255, 0.3)' },
                                 className: 'w-100',
                                 enlargedImageContainerDimensions: {
@@ -493,12 +570,12 @@ const ProductSingle = () => {
                             />
                           </div>
                         )
-                        : <img src={displaySrc} style={{maxWidth: 360, width: '100%', height: 'auto'}} alt="swipe"/>
+                        : <img src={noImage} style={{maxWidth: 360, width: '100%', height: 'auto'}} alt="swipe"/>
                     }
                   </div>
                 </SwiperSlide>
-              })
-            }
+              );
+            })}
           </Swiper>
           <Swiper
             onSwiper={setThumbsSwiper}
@@ -528,24 +605,32 @@ const ProductSingle = () => {
             modules={[FreeMode, Thumbs]}
             className="mySwiper mt-3"
           >
-            {
-              (
-                get(isDetails, "product.images", []).length
-                  ? get(isDetails, "product.images", [])
-                  : [{image: get(isDetails, "product.main_image")}]
-              ).map((item, number) => {
-                const relativeThumb = get(item, "image");
-                const thumbSrc = relativeThumb ? (config.FILE_ROOT ? `${config.FILE_ROOT}${relativeThumb}` : relativeThumb) : '';
-                return <SwiperSlide key={number}>
+            {productImageEntries.map((item, number) => {
+              const thumbSrc = item.src || primaryImage || noImage;
+              const removing = !!removingImages[item.id];
+              const canDelete = canManageImages && item.id !== 'placeholder';
+              return (
+                <SwiperSlide key={item.id || number}>
                   <div
-                    className="bg-white swiper-slide-box custom-rounded-12 d-flex align-items-center justify-content-center"
+                    className="bg-white swiper-slide-box custom-rounded-12 d-flex align-items-center justify-content-center position-relative"
                     style={{minHeight: 80}}
                   >
+                    {canDelete ? (
+                      <button
+                        type="button"
+                        className="btn btn-light btn-sm position-absolute"
+                        style={{top: 6, right: 6}}
+                        onClick={() => handleRemoveImage(item.id)}
+                        disabled={removing}
+                      >
+                        {removing ? '...' : 'Delete'}
+                      </button>
+                    ) : null}
                     <img src={thumbSrc} height={51} alt="swipe"/>
                   </div>
                 </SwiperSlide>
-              })
-            }
+              );
+            })}
           </Swiper>
         </div>
 

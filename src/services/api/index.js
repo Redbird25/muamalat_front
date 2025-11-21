@@ -371,7 +371,31 @@ const defaultExport = {
   customerAuth,
   merchant,
   sellerProfile,
-  master
+  master,
+  buildApiUrl,
+  productBadges: {
+    fetchAll: ({accessToken} = {}) =>
+      request.get('/api/v1/product-badge/all', {
+        headers: authHeader(accessToken)
+      }),
+    getById: ({accessToken, id} = {}) =>
+      request.get('/api/v1/product-badge', {
+        headers: authHeader(accessToken),
+        params: {id}
+      }),
+    create: ({accessToken, payload} = {}) =>
+      request.post('/api/v1/product-badge', payload || {}, {
+        headers: authHeader(accessToken)
+      })
+  },
+  productImages: {
+    getImageUrl: (id) => buildApiUrl(id ? `/api/v1/product-image/${id}` : ''),
+    deleteImage: ({accessToken, imageId, productId} = {}) =>
+      request.delete('/api/v1/product-image', {
+        headers: authHeader(accessToken),
+        params: {imageId, productId}
+      })
+  }
 };
 
 export default defaultExport;

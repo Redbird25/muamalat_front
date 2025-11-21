@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {get} from "lodash";
 import {Link, useNavigate} from "react-router-dom";
-import config from "../../config";
 import InputPhone from "../../components/Fields/InputPhone";
 import {useDispatch, useSelector} from "react-redux";
 import {ModalLoginRegister, Spinner} from "../../components";
@@ -11,6 +10,8 @@ import {toast} from "react-toastify";
 import FavouritesAction from "../../redux/functions/favourites";
 import RecommendProducts from "../../components/RecommendProducts";
 import {LOGIN} from "../../redux/actions";
+import {resolvePrimaryImageUrl} from "../../services/utils";
+import noImage from "../../assets/images/no-image.png";
 
 const BasketCart = () => {
   const dispatch = useDispatch();
@@ -72,7 +73,7 @@ const BasketCart = () => {
                       <div className="border custom-rounded-12 p-3">
                         <div className="row">
                           <div className="col-xxl-1 col-xl-2 d-flex align-items-center justify-content-center">
-                            <img className={"w-100"} src={config.FILE_ROOT + get(item, "main_image")} alt="phone"/>
+                            <img className={"w-100"} src={resolvePrimaryImageUrl(item) || noImage} alt="phone"/>
                           </div>
 
                           <div className="col-xxl-10 mt-xl-0 mt-3 col-xl-10">
@@ -321,7 +322,7 @@ const BasketCart = () => {
                                 <div className="border custom-rounded-12 p-3">
                                   <div className="row">
                                     <div className="col-xxl-1 col-xl-2 d-flex align-items-center justify-content-center">
-                                      <img className={"w-100"} src={config.FILE_ROOT + get(item, "main_image")}
+                                      <img className={"w-100"} src={resolvePrimaryImageUrl(item) || noImage}
                                            alt="phone"/>
                                     </div>
 
