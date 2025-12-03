@@ -12,11 +12,13 @@ const ModerationPage = () => {
   const [onlyWithIssues, setOnlyWithIssues] = useState(false);
 
   const filteredProducts = useMemo(() => {
+    const safeSearch = (search || '').toLowerCase();
     return pendingProducts.filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase())
-        || product.seller.toLowerCase().includes(search.toLowerCase())
-        || product.category.toLowerCase().includes(search.toLowerCase());
-      const matchesIssues = !onlyWithIssues || (product.issues && product.issues.length);
+      const name = (product?.name || '').toLowerCase();
+      const seller = (product?.seller || '').toLowerCase();
+      const category = (product?.category || '').toLowerCase();
+      const matchesSearch = name.includes(safeSearch) || seller.includes(safeSearch) || category.includes(safeSearch);
+      const matchesIssues = !onlyWithIssues || (product?.issues && product.issues.length);
       return matchesSearch && matchesIssues;
     });
   }, [pendingProducts, search, onlyWithIssues]);

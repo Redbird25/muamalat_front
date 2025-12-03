@@ -1,6 +1,14 @@
 import ImportAll from "./ImportAll";
 import Responsive from "./Responsive";
-import {buildProductImageUrl, normalizeProductImages, resolvePrimaryImageUrl, resolveProductImageUrls} from "./product";
+import {
+  buildProductImageUrl,
+  normalizeProductImages,
+  resolvePrimaryImageUrl,
+  resolveProductImageUrls,
+  normalizeSummaryProducts,
+  normalizeDetailedProduct
+} from "./product";
+import {fetchCategoryTree} from './categoryTree';
 
 
 export {
@@ -9,5 +17,8 @@ export {
   buildProductImageUrl,
   normalizeProductImages,
   resolvePrimaryImageUrl,
-  resolveProductImageUrls
+  resolveProductImageUrls,
+  fetchCategoryTree,
+  normalizeSummaryProducts,
+  normalizeDetailedProduct
 }

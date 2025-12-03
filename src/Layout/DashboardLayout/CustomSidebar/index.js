@@ -5,7 +5,7 @@ import {Link, useLocation, useNavigate} from "react-router-dom";
 import * as SolarIconSet from "solar-icon-set";
 import {Collapse} from "../../../components";
 import {get} from "lodash";
-import {useDispatch, useSelector} from "react-redux";
+import {shallowEqual, useDispatch, useSelector} from "react-redux";
 import {LOGOUT} from "../../../redux/actions";
 import {toast} from "react-toastify";
 
@@ -13,7 +13,7 @@ const CustomSidebar = () => {
   const toastID = useRef(null);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const {auth} = useSelector(state => state);
+  const auth = useSelector(state => state.auth, shallowEqual);
   const [isAccordion, setAccordion] = useState(false);
   const [isOpen, setOpen] = useState(false);
   const {pathname} = useLocation();

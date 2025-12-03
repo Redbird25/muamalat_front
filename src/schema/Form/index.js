@@ -3,25 +3,24 @@ import PropTypes from 'prop-types';
 import {withFormik} from 'formik';
 import * as Yup from 'yup';
 
-const Form = (props) => {
+const Form = ({
+                 className = '',
+                 onSubmit = () => {},
+                 autoComplete = false,
+                 children,
+                 ...props
+               }) => {
   
   return (
     <form
-      className={props.className}
+      className={className}
       style={props.style}
-      onSubmit={props.handleSubmit}
-      autoComplete={props.autoComplete ? "on" : "off"}
+      onSubmit={props.handleSubmit || onSubmit}
+      autoComplete={autoComplete ? "on" : "off"}
     >
-      {props.children({...props})}
+      {children({...props, className, autoComplete})}
     </form>
   )
-};
-
-Form.defaultProps = {
-  className: '',
-  onSubmit: () => {
-  },
-  autoComplete: false
 };
 
 Form.propTypes = {

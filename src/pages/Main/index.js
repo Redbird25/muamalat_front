@@ -30,6 +30,7 @@ import {get} from "lodash";
 import {Empty, Pagination, ProductItem, Spinner} from "../../components";
 import {LoadAll} from "../../schema/container";
 import Toolbar from "../../components/Toolbar";
+import {normalizeSummaryProducts} from "../../services/utils/product";
 
 const Main = () => {
   const [page, setPage] = useState(1);
@@ -172,12 +173,16 @@ const Main = () => {
       <div className="container mt-2">
         <div className="row my-2">
           <LoadAll
-            url={"/products"}
+            url={"/api/v1/product/by-state"}
             name={"mainProducts"}
             params={{
-              page,
-              perPage: 15
+              page: page - 1,
+              extra: {
+                size: 15,
+                state: "APPROVED"
+              }
             }}
+            callback={normalizeSummaryProducts}
             onSuccess={() => {
             }}
             onError={() => {

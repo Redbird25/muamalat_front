@@ -3,17 +3,16 @@ import Routes from "./routes";
 import 'react-toastify/dist/ReactToastify.min.css';
 import {ToastContainer} from "react-toastify";
 import {useEffect} from "react";
-import {useDispatch, useSelector} from "react-redux";
-import Actions from "./redux/actions";
+import {shallowEqual, useSelector} from "react-redux";
 
 function App() {
-  const dispatch = useDispatch();
-  const {auth: {isAuthenticated}, system: {regions}} = useSelector(state => state);
+  const {isAuthenticated, regions} = useSelector(state => ({
+    isAuthenticated: state.auth?.isAuthenticated,
+    regions: state.system?.regions || []
+  }), shallowEqual);
   useEffect(() => {
-    if (!regions.length) {
-      dispatch(Actions.REGIONS.request());
-    }
-  }, [dispatch, regions, isAuthenticated]);
+    // Regions fetch disabled per request (backend 404). Enable when endpoint is available.
+  }, [isAuthenticated, regions]);
   
   return (
     <div className={"main-body body-img position-relative"} id="main-body">

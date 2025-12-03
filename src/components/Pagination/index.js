@@ -4,12 +4,12 @@ import ReactPaginate from "react-paginate";
 
 const Pagination = (
   {
-    pageCount,
-    initialPage,
-    pageRange,
-    marginPage,
-    onChange,
-    className
+    pageCount = 10,
+    initialPage = 1,
+    pageRange = 2,
+    marginPage = 3,
+    onChange = () => {},
+    className = ''
   }
 ) => {
   return (
@@ -34,15 +34,6 @@ const Pagination = (
       onPageChange={i => onChange(i.selected + 1)}
     />
   );
-};
-
-Pagination.defaultProps = {
-  pageCount: 10,
-  initialPage: 1,
-  pageRange: 2,
-  marginPage: 3,
-  onChange: () => {},
-  className: ''
 };
 
 Pagination.propTypes = {

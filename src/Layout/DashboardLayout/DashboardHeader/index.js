@@ -1,10 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {useSelector} from "react-redux";
+import {shallowEqual, useSelector} from "react-redux";
 import icon_1 from "assets/images/icon/user-admin.svg"
 import {get} from "lodash";
 
 const DashboardHeader = () => {
-  const {system: {regions}} = useSelector(state => state);
+  const regions = useSelector(state => state.system?.regions || [], shallowEqual);
   const dropdownRef = useRef({});
   const dropdownLangRef = useRef({});
   const dropdownProfileRef = useRef({});

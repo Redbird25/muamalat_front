@@ -2,6 +2,7 @@ import React from 'react';
 import {LoadAll} from "../../schema/container";
 import {Empty, ProductItem, Spinner} from "../index";
 import {useNavigate} from "react-router-dom";
+import {normalizeSummaryProducts} from "../../services/utils/product";
 
 const MyComponent = () => {
   const navigate = useNavigate();
@@ -22,12 +23,16 @@ const MyComponent = () => {
       
       <div className="row">
         <LoadAll
-          url={"/products"}
+          url={"/api/v1/product/by-state"}
           name={"mainProducts"}
           params={{
-            page: 2,
-            perPage: 5
+            page: 0,
+            extra: {
+              size: 5,
+              state: "APPROVED"
+            }
           }}
+          callback={normalizeSummaryProducts}
           onSuccess={() => {
           }}
           onError={() => {

@@ -2,8 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Link, useNavigate} from "react-router-dom";
 import MyForm from "../../../schema/Form";
 import {get} from "lodash";
-import {CREATE, LoadAll as LoadAllDispatch} from "../../../schema/actions";
-import {serialize} from "object-to-formdata";
+import {LoadAll as LoadAllDispatch} from "../../../schema/actions";
 import {toast} from "react-toastify";
 import errorClass from "../../../services/ErrorClass";
 import {Field} from "formik";
@@ -12,6 +11,8 @@ import InputPhone from "../../../components/Fields/InputPhone";
 import CustomDocumentUploading from "../../../components/CustomDocumentUploading";
 import no_image from "../../../assets/images/no-image.png";
 import {useDispatch} from "react-redux";
+import {fetchCategoryTree} from "../../../services/utils";
+import {api} from "services";
 
 const ProductCreate = () => {
   const navigate = useNavigate();
@@ -23,22 +24,25 @@ const ProductCreate = () => {
   const [isDeleteActive, setDeleteActive] = useState(-1);
   
   useEffect(() => {
-    dispatch(LoadAllDispatch.request({
-      url: "/categories",
-      name: "productCategoriesSelect",
-      cb: {
-        success: (data) => {
-          setCategories(data)
-        },
-        error: (error) => {
-          toast.error(error)
-        },
-        finally: () => {
-        
+    let isMounted = true;
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategoryTree();
+        if (isMounted) {
+          setCategories(data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          toast.error("Kategoriya ma'lumotlarini yuklashda xatolik yuz berdi");
         }
       }
-    }));
-  }, [dispatch]);
+    };
+
+    loadCategories();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
   
   useEffect(() => {
     if (typeOptionID) {
@@ -155,9 +159,7 @@ const ProductCreate = () => {
             {
               name: "product_type_option_ids",
               value: [],
-              type: "array",
-              min: 1,
-              required: true
+              type: "array"
             },
             /*{
               name: "type_sales",
@@ -185,37 +187,46 @@ const ProductCreate = () => {
               required: true
             }
           ]}
-          onSubmit={({values, setSubmitting, resetForm}) => {
-            if (get(values, "product_images", []).length > 5) {
-              get(values, "product_images", []).slice(0, 5)
-            }
-            const FormValues = {
-              ...values,
-              main_image: get(values, "product_images.[0]", []),
-              product_images: get(values, "product_images", []),
-              product_type_option_ids: get(values, "product_type_option_ids", []).flat(1)
-            }
-            dispatch(CREATE.request({
-              url: "/seller/products/store",
-              name: "productCreate",
-              values: serialize(FormValues, {indices: true}),
-              cb: {
-                success: () => {
-                  resetForm();
-                  toast.success("Tovar qo'shildi!")
-                  navigate("/dashboard/products")
-                },
-                errors: (error) => {
-                  toast.error(get(error, "message"), {
-                    position: "top-right",
-                    pauseOnHover: true
-                  })
-                },
-                finally: () => {
-                  setSubmitting(false)
-                }
+          onSubmit={async ({values, setSubmitting, resetForm}) => {
+            setSubmitting(true);
+            try {
+              const images = (get(values, "product_images", []) || []).filter(Boolean).slice(0, 10);
+              const payload = {
+                nameUz: get(values, "name_uz") || get(values, "name_ru") || "",
+                nameEn: get(values, "name_ru") || get(values, "name_uz") || "",
+                nameRu: get(values, "name_ru") || get(values, "name_uz") || "",
+                descriptionUz: get(values, "description_uz") || get(values, "description_ru") || "",
+                descriptionEn: get(values, "description_ru") || get(values, "description_uz") || "",
+                descriptionRu: get(values, "description_ru") || get(values, "description_uz") || "",
+                uzsPrice: Number(get(values, "price") || 0),
+                catalogId: get(values, "catalog_id.id") || get(values, "catalog_id"),
+                categoryId: get(values, "category_id.id") || get(values, "category_id"),
+                subCategoryId: get(values, "sub_category_id.id") || get(values, "sub_category_id"),
+                remainingStock: parseInt(get(values, "count") || 0, 10) || 0,
+                availableInCash: parseInt(get(values, "product_availability")) === 1
+              };
+
+              const createRes = await api.request.post('/api/v1/product', payload);
+              const createdProduct = get(createRes, 'data.result') || get(createRes, 'data') || {};
+              const productId = get(createdProduct, 'id');
+
+              if (productId && images.length) {
+                const formData = new FormData();
+                images.forEach(file => formData.append('images', file));
+                await api.request.post('/api/v1/product/add-image', formData, {
+                  headers: {'Content-Type': 'multipart/form-data'},
+                  params: {productId}
+                });
               }
-            }))
+
+              resetForm();
+              toast.success("Tovar qo'shildi!");
+              navigate("/dashboard/products");
+            } catch (error) {
+              toast.error(get(error, "response.data.message") || "Mahsulotni yaratib bo'lmadi");
+            } finally {
+              setSubmitting(false);
+            }
           }}
         >
           {({values, touched, errors, setFieldValue, setFieldTouched, isSubmitting}) => {

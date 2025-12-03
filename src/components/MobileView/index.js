@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import logo from "../../assets/images/icon/logo.svg";
 import {Link, useNavigate} from "react-router-dom";
 import AsyncSelect2 from "../Fields/AsyncSelect2";
-import {useSelector} from "react-redux";
+import {shallowEqual, useSelector} from "react-redux";
 
 const MobileView = (
   {
@@ -14,7 +14,7 @@ const MobileView = (
   }
 ) => {
   const navigate = useNavigate();
-  const {system: {regions}} = useSelector(state => state);
+  const regions = useSelector(state => state.system?.regions, shallowEqual);
   const [menuBar, setMenuBar] = useState(null);
   const [isCollapse, setCollapse] = useState("");
   

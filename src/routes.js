@@ -2,7 +2,7 @@ import React, {lazy, Suspense, useState} from 'react';
 import {BrowserRouter as Router, Navigate, Route, Routes, useLocation} from "react-router-dom";
 import {Spinner} from "./components";
 import NotFound from "./pages/NotFound";
-import {useSelector} from "react-redux";
+import {shallowEqual, useSelector} from "react-redux";
 import get from "lodash.get";
 import Header from "./Layout/DashboardLayout/Header";
 import Footer from "./Layout/DashboardLayout/Footer";
@@ -341,7 +341,7 @@ const RouterContent = ({auth}) => {
 };
 
 const RoutesComponent = () => {
-  const {auth} = useSelector(state => state);
+  const auth = useSelector(state => state.auth, shallowEqual);
   return (
     <Router future={{
       v7_startTransition: true,

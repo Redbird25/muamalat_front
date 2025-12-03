@@ -4,6 +4,29 @@ import Actions from './actions';
 import {api} from 'services';
 import get from 'lodash.get';
 
+const normalizeResponse = (response, {dataKey = 'data', metaKey = 'meta', asData = false} = {}) => {
+  const payload = get(response, 'data', response);
+  const result = get(payload, 'result', payload);
+
+  let data = asData ? result : get(result, dataKey);
+  let meta = get(result, metaKey);
+
+  if (typeof data === 'undefined' && Array.isArray(get(result, 'content'))) {
+    data = get(result, 'content');
+    meta = meta || {
+      total: get(result, 'totalElements'),
+      page: get(result, 'number'),
+      size: get(result, 'size')
+    };
+  }
+
+  if (typeof data === 'undefined') {
+    data = result;
+  }
+
+  return {data, meta};
+};
+
 function* LoadAll({payload}) {
   const {
     method = 'get',
@@ -19,25 +42,22 @@ function* LoadAll({payload}) {
     callback
   } = payload;
   try {
-    const {data: {result}} = yield call(api.request[method], api.queryBuilder(url, {...params}));
-    let data = asData ? result : get(result, dataKey);
-    let meta = get(result, metaKey)
-    if (callback) {
-      data = callback(data);
-    }
+    const response = yield call(api.request[method], api.queryBuilder(url, {...params}));
+    const {data, meta} = normalizeResponse(response, {dataKey, metaKey, asData});
+    const normalizedData = callback ? callback(data) : data;
     
     yield put(Actions.LoadAll.success({
       name,
       append,
       prepend,
       url,
-      data,
+      data: normalizedData,
       params,
       callback,
-      meta: get(result, metaKey)
+      meta
     }));
     
-    yield call(cb.success, data, meta);
+    yield call(cb.success, normalizedData, meta);
   } catch (error) {
     if (error) {
       if (get(error, 'response.data.message') === "Unauthenticated.") {
@@ -73,19 +93,17 @@ function* LoadOne({payload}) {
     callback
   } = payload;
   try {
-    const {data: {result}} = yield call(api.request.get, api.queryBuilder(url, {...params}));
-    let data = asData ? result : get(result, dataKey);
-    if (callback) {
-      data = callback(data);
-    }
+    const response = yield call(api.request.get, api.queryBuilder(url, {...params}));
+    const {data} = normalizeResponse(response, {dataKey, asData});
+    const normalizedData = callback ? callback(data) : data;
     
     yield put(Actions.LoadOne.success({
       name,
       url,
-      data,
+      data: normalizedData,
       params,
     }));
-    yield call(cb.success, data);
+    yield call(cb.success, normalizedData);
   } catch (error) {
     
     yield put(Actions.LoadOne.failure({

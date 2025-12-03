@@ -338,10 +338,10 @@ const master = {
     request.get('/api/v1/permissions/all', {
       headers: authHeader(accessToken)
     }),
-  createPermission: ({accessToken, name} = {}) =>
+  createPermission: ({accessToken, name, description, code} = {}) =>
     request.post('/api/v1/permissions', null, {
       headers: authHeader(accessToken),
-      params: {permissionName: name}
+      params: {permissionName: name || code, description, code: code || name}
     }),
   searchPermissions: ({accessToken, name} = {}) =>
     request.get('/api/v1/permissions/by-name', {
@@ -361,6 +361,16 @@ const master = {
     request.post('/api/v1/permissions/give-permission', null, {
       headers: authHeader(accessToken),
       params: {permissionId, userId}
+    }),
+  fetchProductsByState: ({accessToken, state, page = 0, size = 20} = {}) =>
+    request.get('/api/v1/product/by-state', {
+      headers: authHeader(accessToken),
+      params: {state, page, size}
+    }),
+  approveOrRejectProduct: ({accessToken, productId, approve = true} = {}) =>
+    request.put('/api/v1/product/approve-or-reject', null, {
+      headers: authHeader(accessToken),
+      params: {productId, approve}
     })
 };
 

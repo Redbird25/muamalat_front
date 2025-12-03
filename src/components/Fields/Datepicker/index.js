@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
-const TimePicker = ({ className="", value, showYearPicker, onChange, }) => {
+const TimePicker = ({ className = "", value, showYearPicker, onChange, }) => {
   const [startDate, setStartDate] = useState(null);
 
   return (
@@ -18,10 +18,6 @@ const TimePicker = ({ className="", value, showYearPicker, onChange, }) => {
       placeholderText="YYYY"
     />
   );
-};
-
-TimePicker.defaultProps = {
-
 };
 
 export default TimePicker;

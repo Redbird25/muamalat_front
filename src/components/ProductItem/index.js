@@ -2,7 +2,7 @@ import React from 'react';
 import {get} from "lodash";
 import InputPhone from "../Fields/InputPhone";
 import {Link, useLocation, useNavigate} from "react-router-dom";
-import {useDispatch, useSelector} from "react-redux";
+import {shallowEqual, useDispatch, useSelector} from "react-redux";
 import {DELETE, METHOD, UPDATE} from "../../schema/actions";
 import {toast} from "react-toastify";
 import FavouritesAction from "../../redux/functions/favourites";
@@ -15,7 +15,10 @@ const ProductItem = ({
                        actionFrom = "main",
                        col = 20
                      }) => {
-  const {auth, system: {products}} = useSelector(state => state);
+  const {auth, products} = useSelector(state => ({
+    auth: state.auth,
+    products: get(state, "system.products")
+  }), shallowEqual);
   const {pathname} = useLocation();
 
   const dispatch = useDispatch();

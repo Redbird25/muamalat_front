@@ -11,17 +11,17 @@ import {useTranslation} from "react-i18next";
 
 const LoadOne = (
   {
-    isActive,
-    children,
+    isActive = true,
+    children = () => {},
     url='',
     name='',
     params={},
-    asData,
-    dataKey,
-    callback,
-    onSuccess,
-    onError,
-    onFinally
+    asData = false,
+    dataKey = 'data',
+    callback = null,
+    onSuccess = () => {},
+    onError = () => {},
+    onFinally = () => {}
   }
 ) => {
   const {t} = useTranslation()
@@ -75,20 +75,6 @@ LoadOne.propTypes = {
   callback: PropTypes.func,
   onError: PropTypes.func,
   onFinally: PropTypes.func,
-};
-
-LoadOne.defaultProps = {
-  isActive: true,
-  children: () => {},
-  url: '',
-  name: '',
-  params: {},
-  asData: false,
-  dataKey: 'data',
-  onSuccess: () => {},
-  onError: () => {},
-  onFinally: () => {},
-  callback: null
 };
 
 export default LoadOne;

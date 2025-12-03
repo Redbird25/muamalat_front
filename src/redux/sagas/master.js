@@ -63,39 +63,6 @@ const overviewMock = {
   ]
 };
 
-const pendingProductsMock = [
-  {
-    id: 'pn-2001',
-    name: 'Xiaomi Robot Vacuum S20',
-    seller: 'CleanHome',
-    category: 'Бытовая техника',
-    price: 5499000,
-    submittedAt: '2025-10-22T07:45:00Z',
-    issues: ['Проверить сертификат соответствия'],
-    flags: {bestseller: false, hot: false, new: true, sale: true}
-  },
-  {
-    id: 'pn-2002',
-    name: 'Apple Watch Series 10 Titanium',
-    seller: 'GadgetStore',
-    category: 'Смарт-часы',
-    price: 7699000,
-    submittedAt: '2025-10-22T08:10:00Z',
-    issues: ['Требуется подтверждение RMA центра', 'Отсутствует таблица размеров ремешка'],
-    flags: {bestseller: true, hot: true, new: true, sale: false}
-  },
-  {
-    id: 'pn-2003',
-    name: 'Hugo Boss Signature Suit',
-    seller: 'FashionRoom',
-    category: 'Мужская одежда',
-    price: 3399000,
-    submittedAt: '2025-10-22T09:05:00Z',
-    issues: [],
-    flags: {bestseller: false, hot: false, new: false, sale: true}
-  }
-];
-
 const extractPage = (response) => get(response, 'data', response) || {};
 
 const extractTotalElements = (response) => get(extractPage(response), 'totalElements', 0);
@@ -169,8 +136,16 @@ function* fetchCatalog({payload}) {
 
 function* fetchPendingProducts() {
   try {
-    yield delay(150);
-    yield put(Actions.MASTER_FETCH_PENDING_PRODUCTS.success({items: pendingProductsMock}));
+    const token = yield select(state => get(state, 'auth.token'));
+    const response = yield call(api.master.fetchProductsByState, {
+      accessToken: token,
+      state: 'CREATED',
+      page: 0,
+      size: 50
+    });
+    const pageData = extractPage(response);
+    const items = get(pageData, 'content', pageData) || [];
+    yield put(Actions.MASTER_FETCH_PENDING_PRODUCTS.success({items}));
   } catch (error) {
     yield put(Actions.MASTER_FETCH_PENDING_PRODUCTS.failure(error));
   }
@@ -533,17 +508,19 @@ function* approveProduct({payload}) {
   if (!productId) {
     return;
   }
-  const pending = yield select(state => get(state, 'master.pendingProducts', []));
-  const product = pending.find(item => get(item, 'id') === productId);
-  if (!product) {
-    return;
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.approveOrRejectProduct, {
+      accessToken: token,
+      productId,
+      approve: true
+    });
+    yield put(Actions.MASTER_APPROVE_PRODUCT.success({productId}));
+    yield put(Actions.MASTER_FETCH_PENDING_PRODUCTS.request());
+  } catch (error) {
+    yield put(Actions.MASTER_APPROVE_PRODUCT.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось одобрить продукт');
   }
-  const enrichedProduct = {
-    ...product,
-    status: 'active',
-    approvedAt: new Date().toISOString()
-  };
-  yield put(Actions.MASTER_APPROVE_PRODUCT.success({productId, product: enrichedProduct}));
 }
 
 function* updateProductFlags({payload}) {
@@ -560,7 +537,19 @@ function* removeProduct({payload}) {
   if (!productId) {
     return;
   }
-  yield put(Actions.MASTER_REMOVE_PRODUCT.success({productId}));
+  try {
+    const token = yield select(state => get(state, 'auth.token'));
+    yield call(api.master.approveOrRejectProduct, {
+      accessToken: token,
+      productId,
+      approve: false
+    });
+    yield put(Actions.MASTER_REMOVE_PRODUCT.success({productId}));
+    yield put(Actions.MASTER_FETCH_PENDING_PRODUCTS.request());
+  } catch (error) {
+    yield put(Actions.MASTER_REMOVE_PRODUCT.failure(error));
+    toast.error(get(error, 'response.data.message') || 'Не удалось отклонить продукт');
+  }
 }
 
 function* fetchProductBadges() {
@@ -626,3 +615,4 @@ export default function* MasterSaga() {
     takeLatest(Actions.MASTER_CREATE_PRODUCT_BADGE.REQUEST, createProductBadge)
   ]);
 }
+

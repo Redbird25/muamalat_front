@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+﻿import React, {useEffect, useMemo, useState} from 'react';
 import {useDispatch, useSelector} from 'react-redux';
 import get from 'lodash.get';
 import Actions from '../../../redux/actions';
@@ -16,6 +16,7 @@ const AccessPage = () => {
   const adminUserMutation = useSelector(state => get(state, 'master.loading.adminUserMutation'));
 
   const [permissionName, setPermissionName] = useState('');
+  const [permissionDescription, setPermissionDescription] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [grantForm, setGrantForm] = useState({permissionId: '', userId: ''});
   const [userSearch, setUserSearch] = useState('');
@@ -84,8 +85,11 @@ const AccessPage = () => {
       toast.error('Введите название разрешения');
       return;
     }
-    dispatch(Actions.MASTER_CREATE_PERMISSION.request({name: permissionName.trim()}));
+    dispatch(Actions.MASTER_CREATE_PERMISSION.request({
+      name: permissionName.trim(),
+    }));
     setPermissionName('');
+    setPermissionDescription('');
   };
 
   const handleGrantPermission = (event) => {
@@ -170,18 +174,27 @@ const AccessPage = () => {
                     required
                   />
                 </label>
+                <label className="master-form__group">
+                  <span>Description</span>
+                  <input
+                    type="text"
+                    value={permissionDescription}
+                    onChange={(event) => setPermissionDescription(event.target.value)}
+                    placeholder="Brief description"
+                  />
+                </label>
                 <div className="master-actions master-actions--horizontal">
                   <button
                     type="submit"
                     className="master-topbar__button master-topbar__button--primary"
                     disabled={permissionMutation}
                   >
-                    {permissionMutation ? 'Создаём…' : 'Создать'}
+                    {permissionMutation ? "Создаем…" : "Создать"}
                   </button>
                   <button
                     type="button"
                     className="master-topbar__button master-topbar__button--ghost"
-                    onClick={() => setPermissionName('')}
+                    onClick={() => { setPermissionName(''); setPermissionDescription(''); }}
                   >
                     Очистить
                   </button>
@@ -246,11 +259,14 @@ const AccessPage = () => {
                     required
                   >
                     <option value="">Выберите разрешение</option>
-                    {permissionOptions.map(permission => (
-                      <option key={permission.id || permission.name} value={permission.id}>
-                        {permission.name}
-                      </option>
-                    ))}
+                    {permissionOptions.map(permission => {
+                      const value = permission.id || permission.name || permission.code;
+                      return (
+                        <option key={permission.id || permission.name || value} value={value}>
+                          {permission.name || permission.code || value}
+                        </option>
+                      );
+                    })}
                   </select>
                 </label>
                 <label className="master-form__group">
@@ -445,3 +461,12 @@ const AccessPage = () => {
 };
 
 export default AccessPage;
+
+
+
+
+
+
+
+
+

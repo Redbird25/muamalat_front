@@ -11,23 +11,23 @@ const Select = (
     isActive = false,
     url,
     other = false,
-    perPage,
-    optionLabel,
-    optionValue,
+    perPage = 20,
+    optionLabel = 'name',
+    optionValue = 'id',
     filterParams,
     defaultValue,
     value,
     onChange,
     updateValue = false,
     inputClassName,
-    hideSelectedOptions,
-    closeMenuOnSelect,
+    hideSelectedOptions = false,
+    closeMenuOnSelect = false,
     menuListHeight,
     menuListMaxHeight,
     menuListWidth,
-    dataKey,
+    dataKey = 'data',
     type,
-    key,
+    key = "1",
     onInputChangeValue,
     onMenuOpen,
     onMenuClose,
@@ -159,17 +159,6 @@ const Select = (
       />
     </>
   );
-};
-
-Select.defaultProps = {
-  // url: '',
-  optionValue: 'id',
-  optionLabel: 'name',
-  hideSelectedOptions: false,
-  perPage: 20,
-  closeMenuOnSelect: false,
-  dataKey: 'data',
-  key: "1"
 };
 
 Select.propTypes = {

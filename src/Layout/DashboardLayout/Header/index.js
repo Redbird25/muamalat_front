@@ -1,25 +1,27 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import logo from "assets/images/icon/logo.svg"
-import {LoadAll} from "schema/actions";
 import {get} from "lodash";
 
 import {ModalLoginRegister} from "../../../components";
-import {useDispatch, useSelector} from "react-redux";
+import {shallowEqual, useDispatch, useSelector} from "react-redux";
 import DashboardHeader from "../DashboardHeader";
 import icon_2 from "../../../assets/images/icon/settings.svg";
 import icon_4 from "../../../assets/images/icon/logout.svg";
 import {LOGOUT} from "../../../redux/actions";
 import {toast} from "react-toastify";
-import {Responsive} from "../../../services/utils";
+import {fetchCategoryTree, Responsive} from "../../../services/utils";
 import MobileView from "../../../components/MobileView";
 
 const Header = ({mobileMenu, setMobileMenu}) => {
   const screenSize = Responsive();
-  const {auth, system: {products}} = useSelector(state => state);
+  const {auth, products} = useSelector(state => ({
+    auth: state.auth,
+    products: get(state, "system.products")
+  }), shallowEqual);
   const {pathname} = useLocation();
   const dispatch = useDispatch();
-  const {system: {regions}} = useSelector(state => state);
+  const regions = useSelector(state => state.system?.regions || [], shallowEqual);
   const navigate = useNavigate();
   const dropdownRef = useRef({});
   const dropdownLangRef = useRef({});
@@ -175,31 +177,33 @@ const Header = ({mobileMenu, setMobileMenu}) => {
   }, [menu, closeMegaMenu]);
   
   useEffect(() => {
-    dispatch(LoadAll.request({
-      url: "/categories",
-      name: "categoriesAll",
-      cb: {
-        success: (data) => {
-          const prepared = data.map(item => ({
-            ...item,
-            icon: get(menuIcons, `[${item.id}].icon`, 'fi fi-rr-menu-burger')
-          }));
-          setCategory(prepared);
-          if (prepared && prepared.length && !menuActive) {
-            setMenuActive(prepared[0]);
-          }
-        },
-        error: () => {
-        
-        },
-        finally: () => {
-        
+    let isMounted = true;
+    const loadCategories = async () => {
+      try {
+        const data = await fetchCategoryTree();
+        if (!isMounted) return;
+        const prepared = data.map(item => ({
+          ...item,
+          icon: get(menuIcons, `[${item.id}].icon`, 'fi fi-rr-menu-burger')
+        }));
+        setCategory(prepared);
+        if (prepared && prepared.length && !menuActive) {
+          setMenuActive(prepared[0]);
+        }
+      } catch (error) {
+        if (isMounted) {
+          toast.error("Kategoriya ma'lumotlarini yuklab bo'lmadi");
         }
       }
-    }))
-    
+    };
+
+    loadCategories();
+
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch]);
+  }, []);
   
   useEffect(() => {
     const bodyMain = document.getElementById("main-body");

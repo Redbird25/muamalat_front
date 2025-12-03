@@ -3,13 +3,13 @@ import PropTypes from 'prop-types';
 
 const Collapse = ({
                     children,
-                    isOpen=true,
-                    defaultHeight,
-                    height,
+                    isOpen = false,
+                    defaultHeight = 0,
+                    height = 'unset',
                     changeHeight,
-                    defaultWidth,
-                    defaultMaxWidth,
-                    defaultStyle,
+                    defaultWidth = 'unset',
+                    defaultMaxWidth = 'unset',
+                    defaultStyle = null,
                     className = '',
                     classNameChildren = '',
                     view
@@ -61,15 +61,6 @@ const Collapse = ({
       </div>
     </div>
   );
-};
-
-Collapse.defaultProps = {
-  isOpen: false,
-  defaultHeight: 0,
-  defaultWidth: 'unset',
-  defaultMaxWidth: 'unset',
-  defaultStyle: null,
-  height: 'unset'
 };
 
 Collapse.propTypes = {

@@ -7,7 +7,7 @@ import icon_modal_2 from "../../assets/images/icon/fast-delivery.svg";
 import icon_modal_3 from "../../assets/images/icon/delivery.svg";
 import icon_modal_4 from "../../assets/images/icon/credit-card.svg";
 import {Modal} from "../index";
-import {useDispatch, useSelector} from "react-redux";
+import {shallowEqual, useDispatch, useSelector} from "react-redux";
 import {useLocation, useNavigate} from "react-router-dom";
 import {get} from "lodash";
 import {toast} from "react-toastify";
@@ -21,7 +21,10 @@ const ModalLoginRegister = ({
   const screenSize = Responsive();
   const {pathname} = useLocation();
   const navigate = useNavigate();
-  const {system: {products}, auth} = useSelector(state => state);
+  const {products, auth} = useSelector(state => ({
+    products: get(state, "system.products"),
+    auth: state.auth
+  }), shallowEqual);
   const dispatch = useDispatch();
   const [sendCode, setSendCode] = useState(false);
   const [secretPhone, setSecretPhone] = useState("");

@@ -13,6 +13,7 @@ import discount_1 from "../../assets/images/discount-product-1.png";
 import discount_2 from "../../assets/images/discount-product-2.png";
 import {LoadAll} from "../../schema/container";
 import Toolbar from "../../components/Toolbar";
+import {normalizeSummaryProducts} from "../../services/utils/product";
 
 const CatalogSingle = () => {
   const [isParams, setParams] = useState({
@@ -209,16 +210,16 @@ const CatalogSingle = () => {
           }}/>
           
           <LoadAll
-            url={"/products"}
+            url={"/api/v1/product/by-subcategory"}
             name={"catalogProducts"}
             params={{
-              page,
-              perPage: 8,
-              search_extra: {
-                product_type_option_ids: [!isEmpty(get(isParams, "product_type_option")) ? Object.entries(get(isParams, "product_type_option")).map(([k, v]) => v ? k : null).filter(fil => fil) : null].flat(1),
-                catalog_ids: [id]
+              page: page - 1,
+              extra: {
+                size: 8,
+                subcategoryId: id
               }
             }}
+            callback={normalizeSummaryProducts}
             onSuccess={(data) => {
               data.forEach(item => {
                 if (productCart[get(item, "id")]) {

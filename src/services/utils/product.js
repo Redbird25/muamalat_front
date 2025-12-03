@@ -66,3 +66,23 @@ export const resolvePrimaryImageUrl = (rawProduct) => {
   const urls = resolveProductImageUrls(rawProduct);
   return urls.length ? urls[0] : '';
 };
+
+export const normalizeSummaryProducts = (items = []) => {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+  return items.map(prod => ({
+    ...prod,
+    name: get(prod, 'nameRu') || get(prod, 'nameUz') || get(prod, 'nameEn') || get(prod, 'name'),
+    price: get(prod, 'uzsPrice', get(prod, 'price')),
+    images: Array.isArray(get(prod, 'images')) ? get(prod, 'images') : get(prod, 'productImages') || []
+  }));
+};
+
+export const normalizeDetailedProduct = (product = {}) => ({
+  ...product,
+  name: get(product, 'nameRu') || get(product, 'nameUz') || get(product, 'nameEn') || get(product, 'name'),
+  price: get(product, 'uzsPrice', get(product, 'price')),
+  images: Array.isArray(get(product, 'images')) ? get(product, 'images') : get(product, 'productImages') || [],
+  count: get(product, 'remainingStock', get(product, 'count'))
+});

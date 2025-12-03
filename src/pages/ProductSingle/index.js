@@ -14,7 +14,7 @@ import RecommendProducts from "../../components/RecommendProducts";
 import {ModalLoginRegister} from "../../components";
 import ReactImageMagnify from "react-image-magnify";
 import {api} from "../../services";
-import {normalizeProductImages, resolvePrimaryImageUrl} from "../../services/utils";
+import {normalizeDetailedProduct, normalizeProductImages, resolvePrimaryImageUrl} from "../../services/utils";
 import noImage from "../../assets/images/no-image.png";
 
 const ProductSingle = () => {
@@ -66,11 +66,12 @@ const ProductSingle = () => {
 
   useEffect(() => {
     dispatch(LoadOne.request({
-      url: `/product/${id}`,
+      url: `/api/v1/product/detailed`,
+      params: {extra: {productId: id}},
       name: "productDetails",
       cb: {
         success: (data) => {
-          setDetails(data)
+          setDetails(normalizeDetailedProduct(data))
         },
         error: (error) => {
           console.log(error)

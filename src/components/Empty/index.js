@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import {useTranslation} from "react-i18next";
 
-function Empty({text, className}) {
+function Empty({text = null, className = ""}) {
   const {t} = useTranslation()
   
   return (
@@ -31,11 +31,6 @@ Empty.propTypes = {
   className: PropTypes.string,
   text: PropTypes.string,
   img: PropTypes.elementType
-};
-
-Empty.defaultProps = {
-  className: "",
-  text: null,
 };
 
 export default Empty;

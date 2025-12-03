@@ -10,20 +10,20 @@ import {api} from "../../services";
 const CustomDocumentUploading = ({
                                    values,
                                    inputName,
-                                   id,
-                                   text,
-                                   displayName,
-                                   classValidInput,
-                                   classValidBtn,
-                                   isMulti,
-                                   showPreview,
-                                   onChange,
-                                   formats,
-                                   icon,
+                                   id = '',
+                                   text = "-ø?‘?‘?úñ‘' ‘\"øü>‘<",
+                                   displayName = 'name',
+                                   classValidInput = '',
+                                   classValidBtn = '',
+                                   isMulti = false,
+                                   showPreview = true,
+                                   onChange = () => {},
+                                   formats = [".doc", ".docx", ".xls", ".xlsx", ".pdf", ".zip", ".rar", ".jpg", ".jpeg", ".png", ".gif", ".svg"],
+                                   icon = <i className="fal fa-paperclip"/>,
                                    fileLink,
                                    fileName,
-                                   fromArray,
-                                   groupStyle
+                                   fromArray = false,
+                                   groupStyle = true
                                  }) => {
   const toastID = useRef(null);
   const handleChange = (file) => {
@@ -250,18 +250,5 @@ const CustomDocumentUploading = ({
   );
 };
 
-CustomDocumentUploading.defaultProps = {
-  id: '',
-  progressBar: false,
-  showPreview: true,
-  text: "Загрузит файлы",
-  formats: [".doc", ".docx", ".xls", ".xlsx", ".pdf", ".zip", ".rar", ".jpg", ".jpeg", ".png", ".gif", ".svg"],
-  icon: <i className="fal fa-paperclip"/>,
-  onChange: () => {
-  },
-  isMulti: false,
-  displayName: 'name',
-  groupStyle: true
-};
 
 export default CustomDocumentUploading;

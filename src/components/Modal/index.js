@@ -4,18 +4,18 @@ import './modal.scss';
 
 const Modal = ({
                  isOpen,
-                 closeOnBack,
-                 className,
+                 closeOnBack = true,
+                 className = '',
                  onClose,
                  children,
-                 width,
-                 minWidth,
-                 maxWidth,
+                 width = 900,
+                 minWidth = 0,
+                 maxWidth = null,
                  modalContentClass,
-                 height,
-                 minHeight,
+                 height = 400,
+                 minHeight = 0,
                  defaultHeight,
-                 position,
+                 position = 'top',
                  modalPaddingAuto = true,
                  order = 0
                }) => {
@@ -79,17 +79,6 @@ const Modal = ({
       </CSSTransition>
     </>
   );
-};
-
-Modal.defaultProps = {
-  width: 900,
-  minWidth: 0,
-  maxWidth: null,
-  height: 400,
-  minHeight: 0,
-  position: 'top',
-  className: '',
-  closeOnBack: true,
 };
 
 export default Modal;

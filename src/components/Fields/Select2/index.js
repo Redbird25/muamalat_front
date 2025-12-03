@@ -5,22 +5,21 @@ import api from 'services/api';
 import {useTranslation} from "react-i18next";
 
 const Select2 = ({
-                   dataKey,
-                   url,
-                   value,
-                   name,
+                   dataKey = 'result.data',
+                   url = '',
+                   value = '',
+                   name = 'name',
                    onChange,
-                   getValue,
-                   getLabel,
-                   isActive,
-                   
-                   placeholder,
-                   extraLabel,
+                   getValue = 'id',
+                   getLabel = 'name',
+                   isActive = true,
+                   placeholder = '',
+                   extraLabel = "",
                    language = false,
                    auth = null,
-                   placeholderDisabled,
-                   placeholderHidden,
-                   optionDisabled,
+                   placeholderDisabled = true,
+                   placeholderHidden = true,
+                   optionDisabled = false,
                    search,
                    extraContent,
                    languageLastID = "",
@@ -124,21 +123,6 @@ const Select2 = ({
       }
     </>
   );
-};
-
-Select2.defaultProps = {
-  isActive: true,
-  dataKey: 'result.data',
-  url: '',
-  name: 'name',
-  value: '',
-  getValue: 'id',
-  getLabel: 'name',
-  placeholder: '',
-  extraLabel: "",
-  placeholderDisabled: true,
-  placeholderHidden: true,
-  optionDisabled: false
 };
 Select2.propTypes = {
   isActive: PropTypes.bool,

@@ -1,8 +1,9 @@
-import React, {useState} from 'react';
+﻿import React, {useState} from 'react';
 import {get} from "lodash";
 import {Empty, ProductItem, Spinner} from "../../../components";
 import {LoadAll} from "../../../schema/container";
 import {Link} from "react-router-dom";
+import {normalizeSummaryProducts} from "../../../services/utils/product";
 
 const Main = () => {
   const [productCart, setProductCart] = useState(localStorage.getItem("product") ? JSON.parse(localStorage.getItem("product")) : {});
@@ -65,12 +66,16 @@ const Main = () => {
       
       <div className="row">
         <LoadAll
-          url={"/products"}
+          url={"/api/v1/product/by-state"}
           name={"mainProducts"}
           params={{
-            page,
-            perPage: 8
+            page: page - 1,
+            extra: {
+              size: 8,
+              state: "APPROVED"
+            }
           }}
+          callback={normalizeSummaryProducts}
           onSuccess={(data, meta) => {
             data.forEach(item => {
               if (productCart[get(item, "id")]) {
@@ -154,12 +159,16 @@ const Main = () => {
       
       <div className="row">
         <LoadAll
-          url={"/products"}
+          url={"/api/v1/product/by-state"}
           name={"clientViewedProducts"}
           params={{
-            page: get(viewed, "page"),
-            perPage: 4
+            page: get(viewed, "page") - 1,
+            extra: {
+              size: 4,
+              state: "APPROVED"
+            }
           }}
+          callback={normalizeSummaryProducts}
           onSuccess={(data, meta) => {
             data.forEach(item => {
               if (productCart[get(item, "id")]) {

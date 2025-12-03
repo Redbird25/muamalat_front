@@ -4,11 +4,14 @@ import {Link, useLocation, useNavigate} from "react-router-dom";
 import {Responsive} from "../../../services/utils";
 import {get} from "lodash";
 import {ModalLoginRegister} from "../../../components";
-import {useSelector} from "react-redux";
+import {shallowEqual, useSelector} from "react-redux";
 
 const Footer = ({setMobileMenu}) => {
   const {pathname} = useLocation();
-  const {auth, system: {products}} = useSelector(state => state);
+  const {auth, products} = useSelector(state => ({
+    auth: state.auth,
+    products: state.system?.products
+  }), shallowEqual);
   const screenSize = Responsive();
   const navigate = useNavigate();
   const [isModal, setModal] = useState(false);

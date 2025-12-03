@@ -1,6 +1,6 @@
 import React, {useEffect, useMemo, useRef, useState} from "react";
 import {Field, Form, Formik} from "formik";
-import {useDispatch, useSelector} from "react-redux";
+import {shallowEqual, useDispatch, useSelector} from "react-redux";
 import {useNavigate} from "react-router-dom";
 import * as Yup from "yup";
 import get from "lodash.get";
@@ -1197,7 +1197,7 @@ const mapStepKeyToIndex = () => {
 const SellerRegisterForm = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const {auth} = useSelector(state => state);
+  const auth = useSelector(state => state.auth, shallowEqual);
   const accessToken = get(auth, "token", "");
   const [currentStep, setCurrentStep] = useState(0);
   const [countdown, setCountdown] = useState(0);

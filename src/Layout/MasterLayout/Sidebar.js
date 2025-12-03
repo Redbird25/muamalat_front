@@ -1,12 +1,12 @@
 import React, {useMemo} from 'react';
 import {NavLink} from 'react-router-dom';
 import * as SolarIconSet from 'solar-icon-set';
-import {useSelector} from 'react-redux';
+import {shallowEqual, useSelector} from 'react-redux';
 import logoSidebar from 'assets/images/icon/logo.svg';
 import get from 'lodash.get';
 
 const Sidebar = ({collapsed = false, isMobileOpen = false, onCloseMobile}) => {
-  const {auth} = useSelector(state => state);
+  const auth = useSelector(state => state.auth, shallowEqual);
   const userName = useMemo(() => {
     const first = get(auth, 'data.user.name') || get(auth, 'data.user.firstName');
     const last = get(auth, 'data.user.surname') || get(auth, 'data.user.lastName');

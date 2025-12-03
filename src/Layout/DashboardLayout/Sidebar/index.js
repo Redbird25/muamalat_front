@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import './sidebar.scss';
-import {useDispatch, useSelector} from "react-redux";
+import {shallowEqual, useDispatch, useSelector} from "react-redux";
 import {Link, useLocation} from "react-router-dom";
 import get from "lodash.get";
 import logo from "assets/images/logo.svg"
@@ -13,7 +13,11 @@ import {Responsive} from "services/utils";
 const Sidebar = () => {
   const dispatch = useDispatch();
   const screenSize = Responsive();
-  const {auth, system: {sidebarToggle, mobileToggle}} = useSelector(state => state);
+  const {auth, sidebarToggle, mobileToggle} = useSelector(state => ({
+    auth: state.auth,
+    sidebarToggle: get(state, "system.sidebarToggle"),
+    mobileToggle: get(state, "system.mobileToggle")
+  }), shallowEqual);
   const [toggle, setToggle] = useState(parseInt(mobileToggle));
   const {pathname, search} = useLocation();
   

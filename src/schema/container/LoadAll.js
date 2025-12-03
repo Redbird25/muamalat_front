@@ -11,20 +11,24 @@ import {useTranslation} from "react-i18next";
 
 const LoadAll = (
   {
-    isActive,
-    children,
+    isActive = true,
+    children = () => {
+    },
     url = '',
     name = '',
     params = {},
-    append,
-    prepend,
-    asData,
-    dataKey,
-    metaKey,
-    callback,
-    onSuccess,
-    onError,
-    onFinally
+    append = false,
+    prepend = false,
+    asData = false,
+    dataKey = 'data',
+    metaKey = 'meta',
+    callback = null,
+    onSuccess = () => {
+    },
+    onError = () => {
+    },
+    onFinally = () => {
+    }
   }
 ) => {
   const {t} = useTranslation()
@@ -84,27 +88,6 @@ LoadAll.propTypes = {
   onError: PropTypes.func,
   onFinally: PropTypes.func,
   callback: PropTypes.func
-};
-
-LoadAll.defaultProps = {
-  isActive: true,
-  children: () => {
-  },
-  url: '',
-  name: '',
-  params: {},
-  append: false,
-  prepend: false,
-  asData: false,
-  dataKey: 'data',
-  metaKey: 'meta',
-  onSuccess: () => {
-  },
-  onError: () => {
-  },
-  onFinally: () => {
-  },
-  callback: null,
 };
 
 export default LoadAll;
